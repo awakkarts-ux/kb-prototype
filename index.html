@@ -31,6 +31,7 @@ button{font:inherit;color:inherit}
 .sbtn kbd,.kbd{margin-left:auto;font:11px/1 system-ui;border:1px solid var(--line2);border-radius:4px;padding:3px 5px;color:var(--faint)}
 .sbtn.dis{opacity:.5}
 .sep{height:1px;background:var(--line);margin:8px 6px}
+.field .in{color:var(--text)}
 .sfoot{margin-top:auto;font-size:12px;color:var(--faint);padding:8px;display:flex;flex-direction:column;gap:6px}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3aa55d;margin-right:6px}
 main{flex:1;min-width:0;overflow:auto;height:100vh}
@@ -289,17 +290,19 @@ textarea.in{min-height:56px;resize:vertical;font-size:13px;line-height:1.4}
   <button class="sbtn" data-go="inbox">Входящие <span class="cnt" id="c-inbox"></span></button>
   <button class="sbtn" data-go="projects">Проекты <span class="cnt" id="c-proj"></span></button>
   <button class="sbtn" data-go="kb">База знаний</button>
+  <button class="sbtn" data-go="sources">Источники <span class="cnt" id="c-src"></span></button>
   <button class="sbtn" data-go="refs">Референсы и вкус</button>
   <button class="sbtn" data-go="docsall">Документы и КП</button>
   <button class="sbtn" data-go="money">Клиенты и деньги</button>
+  <button class="sbtn" data-go="queue">Очередь Claude <span class="cnt" id="c-cq"></span></button>
   <div class="sep"></div>
   <button class="sbtn" id="b-search">Поиск <kbd>Ctrl K</kbd></button>
   <button class="sbtn" id="b-new">Создать <kbd>Ctrl N</kbd></button>
   <div class="sfoot">
-    <div><span class="dot"></span>Папка подключена · офлайн</div>
-    <div id="last-upd">Claude обновил файлы 2 мин назад</div>
+    <div><span class="dot"></span>GitHub · синхронизировано</div>
+    <div id="last-upd">Claude запушил изменения 2 мин назад</div>
     <button class="btn" id="b-theme" style="font-size:12px;padding:4px 8px">Тёмная тема</button>
-    <button class="btn" id="b-sim" style="font-size:12px;padding:4px 8px" title="Показать, как приложение подхватывает изменения файлов">Симуляция: Claude изменил файл</button>
+    <button class="btn" id="b-sim" style="font-size:12px;padding:4px 8px" title="Показать, как приложение подхватывает изменения файлов">Симуляция: Claude запушил изменения</button>
   </div>
 </aside>
 
@@ -333,6 +336,12 @@ textarea.in{min-height:56px;resize:vertical;font-size:13px;line-height:1.4}
   <div class="mfoot"><button class="btn" id="cl-parse">Разобрать реквизиты (Claude)</button><span class="grow"></span><button class="btn" data-close>Отмена</button><button class="btn pri" id="cl-save">Сохранить</button></div>
 </div></div>
 
+<div class="ov" id="ov-msg"><div class="modal" style="width:min(640px,94vw)">
+  <div style="padding:16px 18px;border-bottom:1px solid var(--line)"><h2>Сообщение клиенту о ходе работ</h2><div style="font-size:12px;color:var(--faint);margin-top:4px">Собрано из паспорта по 5 пунктам (Лагута): где мы, результат этапа, когда показ, что нужно от клиента, что дальше. Поправь и скопируй в Telegram</div></div>
+  <textarea id="msg-text" style="min-height:260px"></textarea>
+  <div class="mfoot"><span class="grow"></span><button class="btn" data-close>Закрыть</button><button class="btn pri" id="msg-copy">Скопировать</button></div>
+</div></div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -347,12 +356,13 @@ const ED = {
 const PIPE_FIGMA = ['Бриф','Конкуренты','Гипотезы','Структура','Дизайн-система / стиль','Концепт','Остальные страницы','Адаптив','Перенос в Figma','Передача'];
 const PIPE_TILDA = ['Бриф','Конкуренты','Гипотезы','Структура','Дизайн-система / стиль','Концепт','Остальные страницы','Адаптив','Перенос в Figma','Вёрстка на Tilda','Проверка и запуск'];
 const NUMS_F = ['1','2','2.5','3','4','5','6','7','8','9'];
+const PIPE_CONCEPT = ['Бриф (короткий)','Референсы и эмоция сайта','Структура','Дизайн-система / стиль','Концепт — только десктоп','Остальные страницы','Кейс для портфолио'];
 const NUMS_T = ['1','2','2.5','3','4','5','6','7','8','9','10'];
 function steps(type, sts, notes={}){
-  const names = type==='tilda'?PIPE_TILDA:PIPE_FIGMA, nums = type==='tilda'?NUMS_T:NUMS_F;
+  const names = type==='tilda'?PIPE_TILDA:type==='concept'?PIPE_CONCEPT:PIPE_FIGMA, nums = type==='tilda'?NUMS_T:type==='concept'?PIPE_CONCEPT.map((_,i)=>String(i+1)):NUMS_F;
   return names.map((n,i)=>({n:nums[i],name:n,st:sts[i]||'none',note:notes[i]||''}));
 }
-const TYPES = {figma:'Дизайн в Figma', tilda:'Сайт на Tilda', app:'Приложение', presale:'Пресейл'};
+const TYPES = {figma:'Дизайн в Figma', tilda:'Сайт на Tilda', app:'Приложение', presale:'Пресейл', concept:'Концепт для портфолио'};
 const PSTATUS = {work:'В работе', wait:'Ждём клиента', pause:'Пауза', done:'Сдан'};
 
 const projects = [
@@ -423,9 +433,14 @@ const projects = [
   decisions:[], questions:[], rounds:[]},
  {id:'agroservis', name:'АгроСервис', client:'ООО «АгроСервис», г. Энск', type:'presale', status:'work',
   what:'Пресейл — КП на редизайн сайта на Tilda под ключ', start:'01.10.2026', deadline:'—',
-  links:[['Сайт','agroservis.su'],['Папка','projects/agroservis/']],
+  links:[['Сайт','agroservis.example'],['Папка','projects/agroservis/']],
   steps:[{n:'0',name:'КП',st:'work',note:''}].concat(steps('tilda',[])),
   decisions:[], questions:[], rounds:[]},
+ {id:'itconcept', name:'ИТ-компания — редизайн', client:'Портфолио · без заказчика', type:'concept', status:'work',
+  what:'Концепт редизайна сайта ИТ-компании для портфолио. Только десктоп', start:'01.10.2026', deadline:'—',
+  links:[['Концепт онлайн','GitHub Pages'],['Папка','projects/it-redesign/']],
+  steps:steps('concept',['done','done','done','work','work','none','none']),
+  decisions:[['01.10','Только десктоп, адаптив не делаем'],['01.10','Из референсов берём отмеченные приёмы, а не раскладку']], questions:[], rounds:[]},
  {id:'knowledge-base', name:'База знаний', client:'Я сам', type:'app', status:'work',
   what:'Личная база знаний + своё приложение', start:'05.10.2026', deadline:'—',
   links:[['Папка','projects/knowledge-base/']],
@@ -552,16 +567,18 @@ const docs = [
 
 /* ---------- КП (цены и сроки вводит пользователь — Claude их не предлагает) ---------- */
 const kps = {
- 'agroservis':{status:'draft',what:'Редизайн сайта agroservis.su на Tilda под ключ',pages:'',date:'01.10',until:'',start:'',task:'',pay:'50/50',
+ 'agroservis':{status:'draft',what:'Редизайн сайта agroservis.example на Tilda под ключ',pages:'',date:'01.10',until:'',start:'',task:'',pay:'50/50',
   stages:['Аналитика: бриф, конкуренты, гипотезы','Структура сайта','Дизайн-концепт главной','Внутренние страницы и адаптив','Вёрстка на Tilda','Проверка и запуск'].map(n=>({n,desc:'',res:'',days:'',price:''})),
   cases:['','',''],hist:[['v1','01.10','Черновик']]}
 };
 const KPST={draft:'Черновик',sent:'Отправлено',accepted:'Принято',rejected:'Отклонено'};
 
 /* ---------- Доска решений ---------- */
-const BSTAGES=[['refs','Референсы'],['struct','Структура'],['wire','Вайрфреймы'],['visual','Визуал'],['proto','Прототип']];
+const BSTAGES=[['idea','Идеи (карате)'],['refs','Референсы'],['struct','Структура'],['wire','Вайрфреймы'],['visual','Визуал'],['proto','Прототип']];
 const boards = {
  'nordline':{
+  idea:[{id:'k1',kind:'karate',title:'Блок «Как отличить оригинал»',lead:'Каждый придумал по идее и докручивает чужую. Потом — слабые места и итог',mode:'live',ok:'',fix:'',final:'',weak:{},
+   ideas:[{who:'Claude',text:'Интерактивная пачка: навёл на элемент упаковки — подсказка, чем он отличается у подделки',boost:''},{who:'Ты',text:'Сравнение «оригинал / подделка» двумя фото рядом с подписями',boost:''}]}],
   refs:[{id:'r1',title:'Референсы: «О бренде» и карточка товара',lead:'Claude разобрал референсы проекта. По каждому — берём, адаптируем или мимо',kind:'refs',items:[
     {name:'Beanro',what:'Как собран блок «О бренде»',v:'',note:''},
     {name:'Stone Sip',what:'Что берём — Claude пишет после разбора',v:'',note:''},
@@ -587,7 +604,94 @@ const payments = [
 
 /* ---------- Состояние ---------- */
 const S = {view:'dash', pid:null, ptab:'overview', pfilter:'all', pmode:'list', kbid:'p-success', kbedit:false, refFilter:'all', openRounds:{3:true}, todayDone:{},
-  wk:0, planEdit:false, bstage:'wire', cv:{}, docid:null, doctab:'docs', docv:{}, docblocks:{}, dochtml:{}, docedit:false, mtab:'clients', taste:{}};
+  wk:0, planEdit:false, bstage:'wire', cv:{}, docid:null, doctab:'docs', docv:{}, docblocks:{}, dochtml:{}, docedit:false, mtab:'clients', taste:{}, srcid:'nikolaev', srcmode:'all', srcst:'all', cqf:'all'};
+/* ---------- 18.11: режимы, заметки для кейса, источники, очередь Claude ---------- */
+const MODE=p=>p.type==='concept'?'portfolio':p.type==='app'?'own':'client';
+const MODET={client:'Клиентский',portfolio:'Портфолио',own:'Свой проект'};
+const EXTRA={
+ 'nordline':{emotion:'Подлинность, производство, доверие',why:'Оригинальные дрожжи, своё производство в РФ'},
+ 'itconcept':{emotion:'Инженерность, масштаб, надёжность',why:''}
+};
+const ex=p=>EXTRA[p.id]??={emotion:'',why:''};
+const cases={
+ 'nordline':{task:'Сайт бренда дрожжей: отличить оригинал от подделок и привести опт',role:'Дизайн сайта в Figma, Desktop + Mobile. Разработка на стороне клиента',term:'15 раб. дней',result:'',before:'Старый сайт не объяснял, чем оригинал отличается от подделки',
+  forks:[['Главная, первый экран: два варианта из правок клиента','Вариант A — слева лого на белом, справа пачки на красном','Клиент выбрал 28.09: бренд узнаётся по красному'],['Корзина на сайте','Корзины нет: частник → маркетплейс, опт → заявка','Клиент не хочет вести розницу сам']]},
+ 'itconcept':{task:'Концепт редизайна сайта ИТ-компании',role:'Концепт целиком: структура, стиль, главная',term:'—',result:'',before:'',forks:[]}
+};
+const caseOf=p=>cases[p.id]??={task:'',role:'',term:'',result:'',before:'',forks:[]};
+const WEAK=['Клише','Бюджет и продакшен','Голос бренда','Кто и где увидит','Доступность','Износ со временем','Этика и закон'];
+const KMODE=[['live','Живой — ходим по очереди'],['auto','Авто — Claude ведёт обе'],['short','Короткий — сразу слабые места']];
+const RST={prop:'💡 Предложено',ok:'✅ Принято',no:'✕ Отклонено'};
+const RMODE={'К':'Клиент','П':'Портфолио','К+П':'Оба'};
+const SOURCES=[
+ {id:'nikolaev',name:'Олег Николаев — смета и кейсы',url:'dsgners.ru/nikolaev_design',date:'18.11',read:'2 статьи',score:'Высокая: свой опыт с цифрами «до и после»',rules:[
+  ['Смета — 6–8 этапов с часами, а не одна строка','К','prop','конструктор КП (6.6), documents'],
+  ['Отдельная строка «созвоны и переписка»; строки «прочее» нет','К','prop','конструктор КП'],
+  ['Три пакета: базовый / оптимальный / расширенный — разный объём при одной ставке','К','prop','конструктор КП'],
+  ['В смете — круги правок, срок ответа на правки, цена срочности','К','prop','конструктор КП'],
+  ['На «дорого» отвечать через объём, а не через скидку','К','prop','справка'],
+  ['Скидка только в обмен: предоплата, гибкие сроки, право на кейс, второй проект','К','prop','стандарты → Деньги'],
+  ['Заголовок кейса: продукт, для кого, один результат','К+П','prop','case-collector'],
+  ['Под обложкой 4 строки: Задача · Роль · Срок · Результат','К+П','prop','case-collector'],
+  ['Экраны по сценариям, подпись в одну строку, остальное — ссылкой','К+П','prop','case-collector'],
+  ['Результат без цифр тоже результат; цифры не придумываем','К','prop','case-collector'],
+  ['В конце кейса: что делаю, для кого, как связаться','К+П','prop','case-collector'],
+  ['Чек-лист кейса из 7 пунктов: не выполнено 3+ — пересобрать','К+П','prop','art-director, режим «разбор кейса»']]},
+ {id:'bondar',name:'Александр Бондарь — подача кейса',url:'dsgners.ru/clost',date:'18.11',read:'1 статья',score:'Средне-высокая: историю кейса собирать с первого дня',rules:[
+  ['Историю кейса собирать с первого дня проекта','К','prop','вкладка «Заметки для кейса»'],
+  ['Каждый блок отвечает на новый вопрос; по заголовкам понятна история','К+П','prop','case-collector'],
+  ['Каркас кейса — серые блоки до дизайна','К+П','prop','совпадает с «сначала HTML»'],
+  ['Исследование в кейсе — только выводы, повлиявшие на решения','К+П','prop','case-collector'],
+  ['Ритм блоков 1 — 2 — много, без повторов подряд','К+П','prop','справка'],
+  ['Все цифры настоящие','К+П','prop','уже правило']]},
+ {id:'duosapiens',name:'Duo Sapiens — портфолио',url:'dsgners.ru/duosapiens',date:'18.11',read:'1 статья',score:'Низкая для процесса: спор без вывода',rules:[
+  ['Портфолио — контейнер: оформление не спорит с работами','П','prop','справка'],
+  ['Три сильных кейса лучше шести, где половина слабых','П','prop','справка'],
+  ['Под клиента — подборка из 2–3 релевантных кейсов','К','prop','КП → релевантный опыт']]},
+ {id:'rybushkina',name:'Света Рыбушкина — исследование под задачу',url:'dsgners.ru/Soldi',date:'18.11',read:'1 статья',score:'Высокая для клиентов с живым продуктом',rules:[
+  ['Перед крупной переделкой предложить клиенту самый дешёвый метод под его вопрос','К','prop','competitor-analysis / hypotheses'],
+  ['Чем дороже ошибка, тем серьёзнее проверка','К','prop','справка'],
+  ['Варианты сравнивать по одному критерию, а не «что больше нравится»','К+П','prop','design-loop, доска решений'],
+  ['Нейротест — только фильтр очевидного','К+П','prop','art-director']]},
+ {id:'mikhalev',name:'Филипп Михалев — до дизайна',url:'dsgners.ru/PhilipUX',date:'18.11',read:'1 статья',score:'Средне-высокая: эмоция сайта до референсов',rules:[
+  ['Вопросы брифа про ценность, «почему вас» и эмоцию','К','prop','brief-analyzer'],
+  ['Ответы клиента — основа гипотез, а не готовые данные','К','prop','hypotheses'],
+  ['Анализ рынка до анализа конкурентов','К','prop','полный цикл — клиенты'],
+  ['Выводы по конкурентам записывать','К','ok','competitor-analysis (уже так)'],
+  ['Эмоция сайта в 3–4 словах до референсов','К+П','prop','паспорт + style-decompose'],
+  ['4 вопроса: что делает, что ожидает, какой смысл, какая ценность','К+П','prop','справка']]},
+ {id:'relate',name:'Relate Studio — PRD и «карате»',url:'dsgners.ru/Relate',date:'15.10, 18.11',read:'2 статьи',score:'Высокая: готовая идея скилла для стадии идей',rules:[
+  ['Технический ТЗ → сначала диаграмма состояний','К','ok','site-structure'],
+  ['Сверка экранов с ТЗ: всё, чего нет в ТЗ, — на решение','К','ok','design-loop, qa-tester'],
+  ['Скилл «карате»: докрутка идей по очереди + слабые места, три режима','К+П','prop','новый скилл + доска решений'],
+  ['Перед показом клиенту — короткий режим «карате»','К','prop','—']]},
+ {id:'laguta',name:'Александр Лагута',url:'dsgners.ru/laguta',date:'15.10, 18.11',read:'9 статей',score:'Высокая: свой опыт, почти всё применимо',rules:[
+  ['Сообщение клиенту о ходе работ — 5 пунктов','К','ok','CLAUDE.md + кнопка в проекте'],
+  ['5 слоёв кейса: контекст → ответственность → развилки → система → результат','К+П','ok','case-collector'],
+  ['Правки делить на 4 категории','К','no','пользователь работает с включёнными правками'],
+  ['Цена — фиксированная за этап','К','prop','стандарты → Деньги'],
+  ['5 вопросов к каждому экрану','К+П','prop','art-director / design-loop']]}
+];
+const CQ=[
+ {id:1,pid:'nordline',text:'Разнести правки раунда 3 из docx по строкам журнала',st:'done',date:'02.10',res:'edits/round-3.md · 10 строк'},
+ {id:2,pid:'nordline',text:'Забрать пометки доски «Вайрфреймы» и собрать выбранный вариант',st:'work',date:'07.10',res:''},
+ {id:3,pid:'',text:'Дочитать источник UPROCK со статьи №61',st:'wait',date:'07.10',res:''}
+];
+const CQST={wait:'Ждёт',work:'В работе',done:'Сделано'};
+function toClaude(text,pid){const n=CQ.length+1;CQ.unshift({id:Date.now(),pid:pid||'',text,st:'wait',date:TODAY_S,res:''});toast(`Задача записана в inbox/claude/2026-${TODAY_S.split('.').reverse().join('-')}-${n}.md → GitHub. Claude заберёт её в сессии или по расписанию`)}
+function clientMsg(p){
+  const cur=curStep(p),i=p.steps.indexOf(cur),next=p.steps.slice(i+1).find(s=>!['done','skip'].includes(s.st)),pc=planCalc(p.id);
+  const q=p.questions.filter(x=>x[0]==='Клиенту').map(x=>'— '+x[1]);
+  const when=pc&&pc.cur>=0?'по плану '+F(pc.days[Math.min(pc.days.length-1,pc.st[pc.cur].fs+pc.st[pc.cur].d+pc.st[pc.cur].lag-1)]):'дату показа уточню отдельно';
+  return `Добрый день! Коротко о ходе работ по проекту «${p.name}».
+
+1. Где мы сейчас: этап «${cur?cur.name:'—'}».
+2. Результат этапа: ${cur?cur.name.toLowerCase():'—'} — покажу целиком, а не по кусочкам.
+3. Когда покажу: ${when}.
+4. Что нужно от вас: ${q.length?'\n'+q.join('\n'):'сейчас ничего, работаю.'}
+5. Что дальше: после согласования начинаю «${next?next.name:'сдачу проекта'}».`;
+}
+
 const $ = s=>document.querySelector(s);
 const esc = s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const P = id=>projects.find(p=>p.id===id);
@@ -626,6 +730,8 @@ function needDecision(){const t=[];active().forEach(p=>p.steps.filter(s=>s.st===
 function go(view,id,tab){S.view=view;S.planEdit=false;S.docedit=false;if(view==='project'){S.pid=id;S.ptab=tab||'overview'}if(view==='kb'&&id)S.kbid=id;if(view==='doc')S.docid=id;render();$('main').scrollTop=0}
 function counts(){
   $('#c-inbox').textContent=inbox.length||'';
+  $('#c-src').textContent=SOURCES.reduce((a,x)=>a+x.rules.filter(r=>r[2]==='prop').length,0)||'';
+  $('#c-cq').textContent=CQ.filter(x=>x.st!=='done').length||'';
   $('#c-proj').textContent=active().length;
   $('#c-today').textContent=todayTasks().filter(t=>!S.todayDone[t.id]).length;
   const over=weekDays(0).filter(d=>isWork(d)&&dayTasks(d).filter(x=>!x.done).length>=OVER).length;
@@ -633,7 +739,7 @@ function counts(){
 }
 function render(){
   document.querySelectorAll('.sbtn[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===S.view||(S.view==='project'&&b.dataset.go==='projects')||(S.view==='doc'&&b.dataset.go==='docsall')));
-  const v={dash,today,cal:calV,inbox:inboxV,projects:projectsV,project:projectV,kb:kbV,refs:refsV,docsall:docsV,doc:docV,money:moneyV}[S.view];
+  const v={dash,today,cal:calV,inbox:inboxV,projects:projectsV,project:projectV,kb:kbV,refs:refsV,docsall:docsV,doc:docV,money:moneyV,sources:sourcesV,queue:queueV}[S.view];
   $('#view').innerHTML=v();bind();counts();
   if(S.view==='project'&&S.ptab==='canvas')cvMount();
 }
@@ -656,6 +762,8 @@ function dash(){
    ${widget('c4','Ждём от других',wo.length,'projects',`<div class="list">${wo.map(x=>`<div class="li" data-proj="${x.proj.id}"><span class="t">${esc(x.text)}</span><span class="m">${esc(x.proj.name)}</span></div>`).join('')||'<div class="empty">Ничего</div>'}</div>`)}
    ${widget('c4','Последние уроки',kb[3].items.length,'kb',`<div class="list">${kb[3].items.map(l=>`<div class="li" data-kb="${l.id}"><span class="t">${esc(l.t)}</span><span class="m">${l.meta[0]}</span></div>`).join('')}</div>`)}
    ${widget('c6','Неделя',wk.reduce((a,d)=>a+dayTasks(d).filter(x=>!x.done).length,0),'cal',`<div class="list">${wk.map(d=>{const n=dayTasks(d).filter(x=>!x.done).length;return `<div class="li" data-nav="cal"><span class="t">${WD[d.getDay()]}, ${F(d)}${F(d)===TODAY_S?' · сегодня':''}</span>${n>=OVER?'<span class="badge hot">перегруз</span>':''}<span class="m">${n} задач</span></div>`}).join('')}${late.map(p=>`<div class="li" data-proj="${p.id}" data-tab="plan"><span class="t">Отставание: ${esc(p.name)}</span><span class="badge hot">${esc(planCalc(p.id).st.filter(s=>s.lag).map(s=>s.name+' +'+s.lag+' дн.').join(', '))}</span></div>`).join('')}</div>`)}
+   ${widget('c6','Правила на подтверждение',SOURCES.reduce((a,x)=>a+x.rules.filter(r=>r[2]==='prop').length,0),'sources',`<div class="list">${SOURCES.filter(x=>x.rules.some(r=>r[2]==='prop')).slice(0,5).map(x=>`<div class="li" data-src="${x.id}"><span class="t">${esc(x.name)}</span><span class="m">💡 ${x.rules.filter(r=>r[2]==='prop').length}</span></div>`).join('')}</div>`)}
+   ${widget('c6','Очередь Claude',CQ.filter(x=>x.st!=='done').length,'queue',`<div class="list">${CQ.slice(0,4).map(x=>`<div class="li" data-nav="queue"><span class="t">${esc(x.text)}</span><span class="m">${CQST[x.st]}</span></div>`).join('')}</div>`)}
    ${widget('c6','Деньги',pend.length,'money',`<div class="list">${pend.map(x=>`<div class="li" data-nav="money"><span class="t">${esc(x.t)}</span><span class="m">${esc(P(x.pid).name)} · ${x.due}</span></div>`).join('')}${Object.entries(kps).map(([pid,k])=>`<div class="li" data-proj="${pid}" data-tab="kp"><span class="t">КП · ${esc(P(pid).name)}</span><span class="m">${KPST[k.status]}</span></div>`).join('')}</div>`)}
   </div>`;
 }
@@ -678,7 +786,7 @@ function inboxV(){
 function projectsV(){
   const f=S.pfilter;
   const list=projects.filter(p=>f==='all'||(f in TYPES?p.type===f:p.status===f));
-  const flt=[['all','Все'],['work','В работе'],['wait','Ждём клиента'],['done','Сданы и архив'],['figma','Figma'],['tilda','Tilda'],['presale','Пресейл']];
+  const flt=[['all','Все'],['work','В работе'],['wait','Ждём клиента'],['done','Сданы и архив'],['figma','Figma'],['tilda','Tilda'],['presale','Пресейл'],['concept','Портфолио']];
   const qlinks=p=>{const L=Object.fromEntries(p.links);return [['Макет',L['Figma']],['Референсы',L['Референсы']],['Сайт',L['Сайт']||L['Концепт онлайн']]]};
   const body = S.pmode==='gallery'
    ? `<div class="note-proto">Галерея по образцу твоей Figma-таблицы проектов: превью, ссылка на макет, референсы, готовый сайт. Сюда же — архив старых проектов (около 50) импортом из той таблицы.</div><div class="refs">${list.map(p=>`<div class="card ref pcard" data-proj="${p.id}" style="cursor:pointer"><div class="shot">превью</div><div class="b" style="flex-direction:column;align-items:stretch;gap:8px"><div class="t"><div>${esc(p.name)}</div><div>${TYPES[p.type]} · ${PSTATUS[p.status]}</div></div><div style="display:flex;gap:6px">${qlinks(p).map(([t,u])=>`<button class="btn ql" style="font-size:12px;padding:3px 8px" ${u?`title="${esc(u)}"`:'disabled'} data-ql="${esc(t)}">${t}</button>`).join('')}</div></div></div>`).join('')}</div>`
@@ -694,11 +802,11 @@ function projectsV(){
 function projectV(){
   const p=P(S.pid);
   const bcount=boards[p.id]?Object.values(boards[p.id]).flat().length:'';
-  const tabs=[['overview','Паспорт',''],['canvas','Холст',''],['board','Доска решений',bcount],['plan','План',planCalc(p.id)?.lag?'+'+planCalc(p.id).lag+' дн.':''],['edits','Правки',openEdits(p)||''],['docs','Документы',docs.filter(d=>d.pid===p.id).length||''],['kp','КП',kps[p.id]?KPST[kps[p.id].status]:''],['calls','Созвоны',''],['files','Файлы','']];
-  const body={overview:passportV,canvas:canvasV,board:boardV,plan:planV,edits:editsV,docs:pdocsV,kp:kpV,calls:callsV,files:filesV}[S.ptab](p);
+  const tabs=[['overview','Паспорт',''],['canvas','Холст',''],['board','Доска решений',bcount],['plan','План',planCalc(p.id)?.lag?'+'+planCalc(p.id).lag+' дн.':''],['edits','Правки',openEdits(p)||''],['docs','Документы',docs.filter(d=>d.pid===p.id).length||''],['kp','КП',kps[p.id]?KPST[kps[p.id].status]:''],['case','Заметки для кейса',''],['calls','Созвоны',''],['files','Файлы','']].filter(t=>t[0]!=='case'||MODE(p)!=='own');
+  const body={overview:passportV,canvas:canvasV,board:boardV,plan:planV,edits:editsV,docs:pdocsV,kp:kpV,case:caseV,calls:callsV,files:filesV}[S.ptab](p);
   return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / <a data-nav="projects">Проекты</a> / ${esc(p.name)}</div>
   <div class="head"><div class="grow"><h1>${esc(p.name)}</h1><p class="sub">${esc(p.what)}</p></div>
-   <button class="btn" data-pdf="Паспорт ${esc(p.name)}">PDF</button>
+   ${MODE(p)==='client'?'<button class="btn" data-cmsg>Сообщение клиенту</button>':''}<button class="btn" data-pdf="Паспорт ${esc(p.name)}">PDF</button>
    <select data-pstatus style="width:auto">${Object.entries(PSTATUS).map(([k,t])=>`<option value="${k}" ${k===p.status?'selected':''}>${t}</option>`).join('')}</select></div>
   <div class="tabs" style="overflow-x:auto">${tabs.map(([k,t,n])=>`<button class="tab ${S.ptab===k?'on':''}" data-ptab="${k}">${t}${n!==''?`<span class="n">${n}</span>`:''}</button>`).join('')}</div>${body}`;
 }
@@ -710,7 +818,8 @@ function passportV(p){
   const sec=(i,id,title,lead,html)=>`<section class="dsec" id="ds-${id}"><div class="eb">${String(i+1).padStart(2,'0')} / ${title.toUpperCase()}</div><h2>${title}</h2>${lead?`<p class="lead">${lead}</p>`:''}${html}</section>`;
   return `<div class="doc"><nav class="doc-nav">${secs.map(([id,t],i)=>`<a data-anchor="ds-${id}"><span>${String(i+1).padStart(2,'0')}</span>${t}</a>`).join('')}</nav><div>
   ${sec(0,'passport','Паспорт','Кто клиент, что делаем и где проект сейчас.',`<div class="spec">
-    <span>Клиент</span><span>${esc(p.client)}</span><span>Что делаем</span><span>${esc(p.what)}</span><span>Тип</span><span>${TYPES[p.type]}</span>
+    <span>Клиент</span><span>${esc(p.client)}</span><span>Что делаем</span><span>${esc(p.what)}</span><span>Тип</span><span>${TYPES[p.type]}</span><span>Режим</span><span>${MODET[MODE(p)]}${MODE(p)==='portfolio'?' · только десктоп, без сметы и договора':''}</span>
+    ${MODE(p)!=='own'?`<span>Эмоция сайта</span><span><input class="in" data-ex="emotion" value="${esc(ex(p).emotion)}" placeholder="3–4 слова: масштаб, надёжность… — по ней подбираем референсы"></span><span>Чем выбирают${MODE(p)==='client'?' клиента':''}</span><span><input class="in" data-ex="why" value="${esc(ex(p).why)}" placeholder="Почему выберут именно их — из брифа"></span>`:''}
     <span>Статус</span><span>${PSTATUS[p.status]}</span><span>Текущий шаг</span><span>${cur?stLabel(cur.st)+' · '+esc(cur.name):'—'}</span>
     <span>Готово шагов</span><span>${done} из ${p.steps.length}</span><span>Старт</span><span>${p.start}</span><span>Срок</span><span>${esc(p.deadline)}</span>
     <span>План</span><span>${pc?`сдача по плану ${F(pc.endPlan)}${pc.lag?` → с отставанием ${F(pc.endFact)} <span class="badge hot">+${pc.lag} дн.</span>`:''}`:'не задан'}</span></div>`)}
@@ -823,6 +932,7 @@ function boardV(p){
   const item=(n,it,i,tall)=>`<div class="card bd-item"><div class="shot ${tall?'tall':''}">${esc(n.kind==='refs'?'скриншот '+it.name:it.name)}</div><div class="b"><div class="t"><div>${esc(it.name)}</div>${it.what?`<div>${esc(it.what)}</div>`:''}</div>${vb(n,i,it)}<textarea class="in" placeholder="Пометка" data-bnote="${n.id}:${i}">${esc(it.note)}</textarea></div></div>`;
   const node=n=>`<section class="card bd-node" id="bn-${n.id}"><div class="bh"><h2 style="font-size:18px">${esc(n.title)}</h2>${n.ok==='ok'?'<span class="badge hot">принято</span>':n.ok==='no'?'<span class="badge hot">на переделку</span>':'<span class="badge">ждёт решения</span>'}</div><p class="lead">${esc(n.lead)}</p>
     ${n.kind==='variants'?`<div class="varsw">${n.variants.map(([k,t])=>`<button class="fbtn ${n.pick===k?'on':''}" data-bpick="${n.id}:${k}">Вариант ${k}</button>`).join('')}</div><div class="bd-grid">${n.variants.map(([k,t])=>`<div class="card bd-item" style="${n.pick&&n.pick!==k?'opacity:.45':''}"><div class="shot">Вариант ${k}</div><div class="b"><div class="t"><div>Вариант ${k}</div><div>${esc(t)}</div></div></div></div>`).join('')}</div><div class="lab" style="margin-top:18px">Состояния выбранного варианта</div><div class="bd-grid" style="margin-top:0">${n.items.map((it,i)=>item(n,it,i,true)).join('')}</div>`
+     :n.kind==='karate'?karateV(n)
      :n.kind==='ba'?`<div class="ba"><div><div class="lab">Было</div><div class="card bd-item"><div class="shot tall">${esc(n.before)}</div></div></div><div><div class="lab">Стало</div><div class="card bd-item"><div class="shot tall">${esc(n.after)}</div></div></div></div><div class="lab" style="margin-top:16px">Что изменилось</div><p style="margin:0;color:var(--muted)">${esc(n.why)}</p>`
      :`<div class="bd-grid">${n.items.map((it,i)=>item(n,it,i,n.kind==='screens')).join('')}</div>`}
     <div class="bd-foot"><button class="rbtn ${n.ok==='ok'?'on':''}" data-bok="${n.id}:ok" title="Принять">✓</button><button class="rbtn ${n.ok==='no'?'on':''}" data-bok="${n.id}:no" title="Отклонить">✕</button><textarea class="in" placeholder="Что поправить" data-bfix="${n.id}">${esc(n.fix)}</textarea></div></section>`;
@@ -897,6 +1007,7 @@ function kpV(p){
    <section class="card sec"><div class="lab">04 · Этапы</div><table class="kp"><tr><th>Этап</th><th>Описание</th><th>Результат</th><th style="width:90px">Дней</th><th style="width:130px">Стоимость</th></tr>
      ${k.stages.map((s,i)=>`<tr><td><input class="in" data-kps="${i}:n" value="${esc(s.n)}"></td><td><input class="in" data-kps="${i}:desc" value="${esc(s.desc)}" placeholder="—"></td><td><input class="in" data-kps="${i}:res" value="${esc(s.res)}" placeholder="—"></td><td><input class="in" data-kps="${i}:days" value="${esc(s.days)}" placeholder="—"></td><td><input class="in" data-kps="${i}:price" value="${esc(s.price)}" placeholder="вводишь сам"></td></tr>`).join('')}
      <tr><td colspan="3"><button class="btn" data-kpadd style="font-size:12px">+ Этап</button></td><td><b>${days||'—'}</b></td><td><b>${money(sum)}</b></td></tr></table></section>
+   ${kpEstV(k)}
    <section class="card sec"><div class="lab">05 · График — даты считаются сами, без учёта согласования</div><div class="row-f" style="margin-bottom:10px"><label class="field" style="margin:0;width:140px">Старт${f('start','ДД.ММ')}</label></div>
      ${gd?`<div class="list">${k.stages.map(s=>{const d=num(s.days);if(!d)return '';const a=gd[gi],b=gd[gi+d-1];gi+=d;return `<div class="li"><span class="t">${esc(s.n)}</span><span class="m">${F(a)} — ${F(b)}</span></div>`}).join('')}<div class="li"><b class="t">Окончание</b><b class="m" style="color:var(--text)">${F(gd[gd.length-1])}</b></div></div>`:'<div class="empty">Заполни старт и дни этапов</div>'}</section>
    <section class="card sec"><div class="row-f" style="margin-bottom:10px"><div class="lab" style="flex:1;margin:0">06 · Релевантный опыт</div><button class="btn" data-toast="Claude подберёт 2–3 кейса из галереи проектов и напишет, почему они полезны именно этому клиенту">Подобрать кейсы (Claude)</button></div>
@@ -908,10 +1019,75 @@ function kpV(p){
 }
 function callsV(){return `<div class="card stub">Созвоны: запись → расшифровка локально (Whisper) → выжимка → правки и решения в паспорт.<br>Экран ещё не перенесён в прототип.</div>`}
 function filesV(p){return `<section class="card"><div class="li" style="padding:12px 16px"><span class="t">${esc(p.links.find(l=>l[0]==='Папка')?.[1]||'')}</span><span class="m">Открыть в проводнике</span></div></section>`}
+/* --- Заметки для кейса (18.11) --- */
+function caseV(p){
+  const c=caseOf(p),port=MODE(p)==='portfolio';
+  const f=(k,lab,ph)=>`<label class="field">${lab}<input class="in" data-cs="${k}" value="${esc(c[k])}" placeholder="${ph}"></label>`;
+  return `<div class="head" style="margin-bottom:12px"><div class="grow"><p class="sub">${port?'Концепт и есть кейс. Цифр нет — пиши, что изменилось и какие решения приняты. Придумывать цифры нельзя.':'Заполняется по ходу проекта, а не в конце. Из заметок Claude соберёт кейс: заголовок → Задача · Роль · Срок · Результат → контекст → развилки → экраны → результат → контакт.'}</p></div>
+   <button class="btn pri" data-csbuild>Собрать кейс (Claude)</button></div>
+  <section class="card sec"><div class="lab">Под обложкой — 4 строки</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:0 14px">
+   ${f('task','Задача','Что за продукт, для кого, что нужно было сделать')}${f('role','Моя роль','Что делал я, а что команда')}${f('term','Срок','Например, 7 недель')}${f('result',port?'Что изменилось':'Результат','«Запустили через 7 недель», «вопросов про оплату на треть меньше»')}</div></section>
+  <section class="card sec"><div class="lab">Контекст: что не работало до вас</div><textarea class="in" data-cs="before" placeholder="С цифрами, если клиент их дал: «до конца регистрации доходили 23%»">${esc(c.before)}</textarea></section>
+  <section class="card sec"><div class="lab">Развилки: было → решили → почему</div>
+   ${c.forks.length?`<table><tr><th>Было / вопрос</th><th>Решили</th><th>Почему</th></tr>${c.forks.map((r,i)=>`<tr>${r.map((v,j)=>`<td><input class="in" data-csf="${i}:${j}" value="${esc(v)}"></td>`).join('')}</tr>`).join('')}</table>`:'<div class="empty">Пока нет. Решения с доски и из паспорта можно добавить сюда одной кнопкой</div>'}
+   <div class="row-f" style="margin-top:10px"><button class="btn" data-csadd>+ Развилка</button><button class="btn" data-csdec>Взять из «Решений» паспорта</button></div></section>
+  <section class="card sec"><div class="lab">Чек-лист кейса — Николаев и Бондарь</div><div class="list">${[['Заголовок понятен заказчику',c.task],['Под обложкой задача, роль, срок, результат',c.task&&c.role&&c.term&&c.result],['Есть контекст',c.before],['3–4 развилки с «почему»',c.forks.filter(r=>r[2]).length>=3],['Цифры только настоящие',true],['В конце — что делаю и как связаться',false]].map(([t,ok])=>`<div class="li ${ok?'done':''}"><span class="chk ${ok?'on':''}">${ok?'✓':''}</span><span class="t">${t}</span></div>`).join('')}</div></section>`;
+}
+
+/* --- Источники (4.1, 18.11) --- */
+function sourcesV(){
+  const s=SOURCES.find(x=>x.id===S.srcid)||SOURCES[0],mf=S.srcmode,sf=S.srcst;
+  const cnt=(x,st)=>x.rules.filter(r=>r[2]===st).length;
+  const rows=s.rules.map((r,i)=>[r,i]).filter(([r])=>(mf==='all'||r[1]===mf||(mf!=='К+П'&&r[1]==='К+П'))&&(sf==='all'||r[2]===sf));
+  return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / <a data-nav="kb">База знаний</a> / Источники</div>
+  <div class="head"><div class="grow"><h1>Источники</h1><p class="sub">Статьи и авторы, которые изучил Claude. Правило: 💡 предложено → ✅ принято (Claude встраивает в указанное место) или ✕ отклонено с причиной. Файлы — sources/*.md</p></div><button class="btn" data-srcnew>+ Источник</button></div>
+  <div class="kb"><nav class="card tree">${SOURCES.map(x=>`<div class="it ${x.id===s.id?'on':''}" data-src="${x.id}">${esc(x.name)}<div style="font-size:12px;color:var(--faint)">${x.date} · 💡 ${cnt(x,'prop')} · ✅ ${cnt(x,'ok')}</div></div>`).join('')}</nav>
+  <article class="card page"><div style="display:flex;gap:12px;align-items:flex-start"><h1 style="flex:1">${esc(s.name)}</h1><button class="btn" data-srcmore>Продолжить изучение (Claude)</button></div>
+   <div class="meta"><span>${esc(s.url)}</span><span>изучено ${s.date}</span><span>${s.read}</span></div>
+   <p style="color:var(--muted);margin:0 0 14px">Оценка: ${esc(s.score)}</p>
+   <div class="filters">${[['all','Все режимы'],['К','Клиент'],['П','Портфолио'],['К+П','Только «оба»']].map(([k,t])=>`<button class="fbtn ${mf===k?'on':''}" data-srcm="${k}">${t}</button>`).join('')}<span style="width:12px"></span>${[['all','Все'],['prop','💡'],['ok','✅'],['no','✕']].map(([k,t])=>`<button class="fbtn ${sf===k?'on':''}" data-srcs="${k}">${t}</button>`).join('')}</div>
+   <table><tr><th>Правило</th><th style="width:90px">Режим</th><th style="width:150px">Статус</th><th>Где работает / причина</th></tr>
+   ${rows.map(([r,i])=>`<tr><td>${esc(r[0])}</td><td class="st">${r[1]}</td><td>${r[2]==='prop'?`<button class="btn" style="font-size:12px;padding:3px 8px" data-rok="${s.id}:${i}">✓ Принять</button> <button class="btn" style="font-size:12px;padding:3px 8px" data-rno="${s.id}:${i}">✕</button>`:`<span class="st">${RST[r[2]]}</span> <a class="st" style="cursor:pointer;text-decoration:underline" data-rback="${s.id}:${i}">вернуть</a>`}</td><td class="st">${esc(r[3])}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">Нет правил под фильтр</td></tr>'}</table>
+  </article></div>`;
+}
+
+/* --- Очередь Claude (18.11) --- */
+function queueV(){
+  return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / Очередь Claude</div>
+  <div class="head"><div class="grow"><h1>Очередь Claude</h1><p class="sub">Кнопки «отдать Claude» кладут файл задачи в inbox/claude/ и пушат в GitHub. Claude на сервере забирает задачу в сессии («разбери входящие») или по расписанию, делает и пушит результат — здесь он появится через 1–2 минуты.</p></div><button class="btn pri" data-cqnew>Новая задача</button></div>
+  <div class="filters">${[['all','Все'],['wait','Ждёт'],['work','В работе'],['done','Сделано']].map(([k,t])=>`<button class="fbtn ${S.cqf===k?'on':''}" data-cqf="${k}">${t} · ${k==='all'?CQ.length:CQ.filter(x=>x.st===k).length}</button>`).join('')}</div>
+  <section class="card"><table><tr><th>Задача</th><th>Проект</th><th>Создана</th><th>Статус</th><th>Результат</th></tr>
+  ${CQ.filter(x=>S.cqf==='all'||x.st===S.cqf).map(x=>`<tr><td>${esc(x.text)}</td><td class="st">${x.pid?esc(P(x.pid).name):'—'}</td><td class="st">${x.date}</td><td class="st">${x.st==='done'?'✅':x.st==='work'?'🔄':'⏳'} ${CQST[x.st]}</td><td class="st">${esc(x.res)||'—'}</td></tr>`).join('')}</table></section>
+  <div class="note-proto" style="margin-top:14px">Расписание (например, раз в час) включается отдельно — по решению. Без него задачу забирает обычная сессия Claude.</div>`;
+}
+
+/* --- Смета по часам в КП (Николаев, 18.11) --- */
+function kpEst(k){return k.est??={rate:'',rows:[['Бриф и структура',''],['Прототип',''],['Концепция первого экрана, 2 варианта',''],['Дизайн остальных блоков',''],['Адаптивы',''],['Круги правок',''],['Подготовка к вёрстке',''],['Созвоны и переписка','']],
+  packs:[['Базовый','Одна концепция, десктоп и телефон, один круг правок',''],['Оптимальный','Всё из сметы',''],['Расширенный','Плюс иллюстрации или 3D первого экрана и UI-кит','']],cond:{rounds:'2',reply:'2',urgent:''}}}
+function kpEstV(k){
+  const e=kpEst(k),h=e.rows.reduce((a,r)=>a+num(r[1]),0),sum=h*num(e.rate),rnd=sum?Math.round(sum/5000)*5000:0;
+  return `<section class="card sec"><div class="lab">04а · Смета по часам — расшифровка цены</div><p class="warn" style="margin:-2px 0 10px">Ставку и часы вводишь сам. 6–8 этапов, строка «созвоны и переписка» обязательна, строки «прочее» нет.</p>
+   <div class="row-f" style="margin-bottom:10px"><label class="field" style="margin:0;width:170px">Ставка, ₽/час<input class="in" data-ker value="${esc(e.rate)}" placeholder="вводишь сам"></label></div>
+   <table><tr><th>Этап</th><th style="width:110px">Часов</th><th style="width:140px">Сумма</th></tr>${e.rows.map((r,i)=>`<tr><td>${i===e.rows.length-1?'<b style="font-weight:550">':''}<input class="in" data-kerow="${i}:0" value="${esc(r[0])}">${i===e.rows.length-1?'</b>':''}</td><td><input class="in" data-kerow="${i}:1" value="${esc(r[1])}" placeholder="—"></td><td class="st">${money(num(r[1])*num(e.rate))}</td></tr>`).join('')}
+   <tr><td><button class="btn" data-keadd style="font-size:12px">+ Этап</button></td><td><b>${h||'—'} ч</b></td><td><b>${money(sum)}</b>${rnd&&rnd!==sum?`<div class="st">в КП: ${money(rnd)}</div>`:''}</td></tr></table></section>
+  <section class="card sec"><div class="lab">04б · Три пакета — разный объём, ставка одна</div><div class="tiles">${e.packs.map((p,i)=>`<div class="card tile" style="cursor:default;gap:8px"><b style="font-weight:550">${p[0]}${i===1?' · основной':''}</b><input class="in" data-kepk="${i}:1" value="${esc(p[1])}"><input class="in" data-kepk="${i}:2" value="${esc(p[2])}" placeholder="цена — вводишь сам"></div>`).join('')}</div></section>
+  <section class="card sec"><div class="lab">04в · Условия</div><div class="row-f"><label class="field" style="margin:0;width:160px">Кругов правок<input class="in" data-kec="rounds" value="${esc(e.cond.rounds)}"></label><label class="field" style="margin:0;width:220px">Отвечаю на правки, дней<input class="in" data-kec="reply" value="${esc(e.cond.reply)}"></label><label class="field" style="margin:0;width:200px">Наценка за срочность, %<input class="in" data-kec="urgent" value="${esc(e.cond.urgent)}" placeholder="вводишь сам"></label></div>
+   <p class="warn" style="margin:10px 0 0">Скидка — только в обмен: 100% предоплата, гибкие сроки, право показать в портфолио и отзыв, второй проект пакетом.</p></section>`;
+}
+
+/* --- Доска: режим «докрутить идею» (карате, Relate, 18.11) --- */
+function karateV(n){
+  return `<div class="filters" style="margin:0 0 12px">${KMODE.map(([k,t])=>`<button class="fbtn ${n.mode===k?'on':''}" data-kmode="${n.id}:${k}">${t}</button>`).join('')}</div>
+  ${n.mode==='short'?'':`<div class="ba">${n.ideas.map((d,ii)=>`<div><div class="lab">Идея ${ii?'Б':'А'} · ${esc(d.who)}${n.mode==='auto'?(ii?' · смелая':' · практичная'):''}</div><div class="card bd-item"><div class="b" style="flex-direction:column;align-items:stretch;gap:8px"><div>${esc(d.text)}</div><div class="lab" style="margin:4px 0 0">Докрутка — ${n.mode==='auto'?'Claude':ii?'Claude':'ты'}: новый угол, механика, носитель, аудитория</div><textarea class="in" data-kboost="${n.id}:${ii}" placeholder="Свою идею не защищаем — докручиваем чужую">${esc(d.boost)}</textarea></div></div></div>`).join('')}</div>`}
+  <div class="lab" style="margin-top:16px">Слабые места${n.mode==='short'?' готового концепта':''}</div>
+  <table><tr><th>Проверка</th>${(n.mode==='short'?[n.ideas[0]]:n.ideas).map((d,ii)=>`<th style="width:180px">Идея ${ii?'Б':'А'}</th>`).join('')}</tr>${WEAK.map((w,wi)=>`<tr><td>${w}</td>${(n.mode==='short'?[n.ideas[0]]:n.ideas).map((d,ii)=>`<td><select data-kw="${n.id}:${ii}:${wi}">${['—','ок','проблема','решено','отсеять'].map(o=>`<option ${n.weak[ii+':'+wi]===o?'selected':''}>${o}</option>`).join('')}</select></td>`).join('')}</tr>`).join('')}</table>
+  <div class="row-f" style="margin-top:12px"><span class="warn">Итог:</span>${[['merge','Объединить лучшее'],['again','Заново с двумя новыми'],['go','Делать']].map(([k,t])=>`<button class="fbtn ${n.final===k?'on':''}" data-kfin="${n.id}:${k}">${t}</button>`).join('')}</div>`;
+}
+
 function kbV(){
   let cur;kb.forEach(g=>g.items.forEach(i=>{if(i.id===S.kbid)cur=i}));
   return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / База знаний</div>
-  <div class="head"><div class="grow"><h1>База знаний</h1><p class="sub">Файлы из kb/ — читаешь здесь, пополняешь через чат с Claude</p></div></div>
+  <div class="head"><div class="grow"><h1>База знаний</h1><p class="sub">Файлы из kb/ в репозитории GitHub — читаешь здесь, пополняешь через чат с Claude</p></div><button class="btn" data-nav="sources">Источники →</button></div>
   <div class="kb"><nav class="card tree">${kb.map(g=>`<div class="g">${g.g}</div>${g.items.map(i=>`<div class="it ${i.id===S.kbid?'on':''}" data-kb="${i.id}">${esc(i.t)}</div>`).join('')}`).join('')}</nav>
   <article class="card page"><div style="display:flex;gap:12px;align-items:flex-start"><h1 style="flex:1">${esc(cur.t)}</h1><button class="btn" data-pdf="${esc(cur.t)}">PDF</button><button class="btn" data-kbedit>${S.kbedit?'Готово':'Править'}</button></div>
    <div class="meta">${cur.meta.map(m=>`<span>${esc(m)}</span>`).join('')}</div>
@@ -1050,7 +1226,7 @@ function bind(){
     if(n.ok===v){n.ok='';render();return}
     if(v==='no'&&!n.fix){document.querySelector(`[data-bfix="${id}"]`).focus();toast('Напиши, что поправить — Claude переделает по пометке');return}
     n.ok=v;if(v==='ok'){p.decisions.unshift([TODAY_S,'Доска: '+n.title+(n.pick?' — вариант '+n.pick:'')+(n.fix?' ('+n.fix+')':'')]);toast('Принято · решение записано в паспорт')}else toast('На переделку · пометка уйдёт Claude');render()});
-  on('[data-bsend]','onclick',()=>{const all=Object.values(boards[S.pid]||{}).flat(),m=all.filter(n=>n.ok).length;toast(`Пометки записаны в projects/${S.pid}/board/${S.bstage}.json (${m} из ${all.length} узлов решено). Claude Code заберёт их и продолжит`)});
+  on('[data-bsend]','onclick',()=>{const all=Object.values(boards[S.pid]||{}).flat(),m=all.filter(n=>n.ok).length;toClaude(`Забрать пометки доски «${BSTAGES.find(x=>x[0]===S.bstage)[1]}» (${m} из ${all.length} узлов решено) и продолжить`,S.pid);render()});
   /* план */
   on('[data-mkplan]','onclick',()=>{const p=P(S.pid);plans[p.id]={start:TODAY_S,tpl:TYPES[p.type],total:'',stages:p.steps.filter(s=>!['done','skip'].includes(s.st)).map(s=>[s.name,'',0])};S.planEdit=true;render()});
   on('[data-pedit]','onclick',()=>{S.planEdit=true;render()});
@@ -1077,6 +1253,33 @@ function bind(){
   on('[data-kpadd]','onclick',()=>{kps[S.pid].stages.push({n:'Новый этап',desc:'',res:'',days:'',price:''});render()});
   on('[data-kpst]','onchange',e=>{const k=kps[S.pid];k.status=e.value;k.hist.unshift(['v'+(k.hist.length+1),TODAY_S,KPST[e.value]]);render();toast('Статус КП: '+KPST[e.value])});
   on('[data-mkkp]','onclick',()=>{const p=P(S.pid);kps[p.id]={status:'draft',what:p.what,pages:'',date:TODAY_S,until:'',start:'',task:'',pay:'50/50',stages:[{n:'Этап 1',desc:'',res:'',days:'',price:''}],cases:['','',''],hist:[['v1',TODAY_S,'Черновик']]};render()});
+  /* 18.11 */
+  on('[data-ex]','onchange',e=>{ex(P(S.pid))[e.dataset.ex]=e.value;toast('Сохранено в PROJECT.md')});
+  on('[data-cmsg]','onclick',()=>{$('#msg-text').value=clientMsg(P(S.pid));$('#ov-msg').classList.add('on')});
+  on('[data-cs]','onchange',e=>{caseOf(P(S.pid))[e.dataset.cs]=e.value;render()});
+  on('[data-csf]','onchange',e=>{const [i,j]=e.dataset.csf.split(':').map(Number);caseOf(P(S.pid)).forks[i][j]=e.value;render()});
+  on('[data-csadd]','onclick',()=>{caseOf(P(S.pid)).forks.push(['','','']);render()});
+  on('[data-csdec]','onclick',()=>{const p=P(S.pid),c=caseOf(p),have=new Set(c.forks.map(f=>f[1]));let n=0;p.decisions.forEach(d=>{if(!have.has(d[1])){c.forks.push(['',d[1],'']);n++}});render();toast(n?`Добавлено развилок: ${n} — допиши «было» и «почему»`:'Все решения уже в развилках')});
+  on('[data-csbuild]','onclick',()=>toClaude('Собрать кейс из заметок по структуре: заголовок → 4 строки → контекст → развилки → экраны → результат → контакт',S.pid));
+  on('[data-src]','onclick',e=>{S.srcid=e.dataset.src;go('sources')});
+  on('[data-srcm]','onclick',e=>{S.srcmode=e.dataset.srcm;render()});
+  on('[data-srcs]','onclick',e=>{S.srcst=e.dataset.srcs;render()});
+  on('[data-rok]','onclick',e=>{const [id,i]=e.dataset.rok.split(':'),r=SOURCES.find(x=>x.id===id).rules[+i];r[2]='ok';toClaude(`Встроить правило «${r[0]}» → ${r[3]}; добавить строку в standards.md`);render()});
+  on('[data-rno]','onclick',e=>{const [id,i]=e.dataset.rno.split(':'),r=SOURCES.find(x=>x.id===id).rules[+i],why=prompt('Почему отклоняешь? Claude больше не будет предлагать это правило');if(why===null)return;r[2]='no';r[3]=why||'без причины';render();toast('Отклонено · причина записана в sources/'+id+'.md')});
+  on('[data-rback]','onclick',e=>{const [id,i]=e.dataset.rback.split(':');SOURCES.find(x=>x.id===id).rules[+i][2]='prop';render()});
+  on('[data-srcmore]','onclick',()=>toClaude('Продолжить изучение источника «'+(SOURCES.find(x=>x.id===S.srcid)||SOURCES[0]).name+'» со следующей статьи'));
+  on('[data-srcnew]','onclick',()=>{const u=prompt('Ссылка на сайт, автора или статью');if(u)toClaude('Изучить источник '+u+' и разложить правила по карточке')});
+  on('[data-cqf]','onclick',e=>{S.cqf=e.dataset.cqf;render()});
+  on('[data-cqnew]','onclick',()=>{const t=prompt('Что сделать Claude?');if(t){toClaude(t);render()}});
+  on('[data-ker]','onchange',e=>{kpEst(kps[S.pid]).rate=e.value;render()});
+  on('[data-kerow]','onchange',e=>{const [i,j]=e.dataset.kerow.split(':').map(Number);kpEst(kps[S.pid]).rows[i][j]=e.value;render()});
+  on('[data-keadd]','onclick',()=>{const r=kpEst(kps[S.pid]).rows;r.splice(r.length-1,0,['Новый этап','']);render()});
+  on('[data-kepk]','onchange',e=>{const [i,j]=e.dataset.kepk.split(':').map(Number);kpEst(kps[S.pid]).packs[i][j]=e.value});
+  on('[data-kec]','onchange',e=>{kpEst(kps[S.pid]).cond[e.dataset.kec]=e.value});
+  on('[data-kmode]','onclick',e=>{const [id,m]=e.dataset.kmode.split(':');bnode(id).mode=m;render()});
+  on('[data-kboost]','onchange',e=>{const [id,i]=e.dataset.kboost.split(':');bnode(id).ideas[+i].boost=e.value});
+  on('[data-kw]','onchange',e=>{const [id,i,w]=e.dataset.kw.split(':');bnode(id).weak[i+':'+w]=e.value});
+  on('[data-kfin]','onclick',e=>{const [id,k]=e.dataset.kfin.split(':'),n=bnode(id);n.final=n.final===k?'':k;render()});
   on('[data-kpaccept]','onclick',()=>{const p=P(S.pid),k=kps[p.id];
     if(k.stages.some(s=>!num(s.days))||!okDate(k.start)){toast('Заполни старт и дни всех этапов — из них соберутся договор и план');return}
     k.status='accepted';k.hist.unshift(['v'+(k.hist.length+1),TODAY_S,'Принято']);
@@ -1114,6 +1317,7 @@ function closeOv(){document.querySelectorAll('.ov').forEach(o=>o.classList.remov
 document.querySelectorAll('.ov').forEach(o=>o.onclick=e=>{if(e.target===o||e.target.hasAttribute('data-close'))closeOv()});
 $('#cl-parse').onclick=()=>toast('Реквизиты переданы Claude Code — поля заполнятся после разбора');
 $('#cl-save').onclick=()=>{const n=$('#cl-name').value.trim();if(!n){$('#cl-name').focus();return}clients.unshift({name:n,pid:''});closeOv();document.querySelectorAll('#ov-client input,#ov-client textarea').forEach(i=>i.value='');S.mtab='clients';render();toast('Клиент сохранён')};
+$('#msg-copy').onclick=()=>{navigator.clipboard?.writeText($('#msg-text').value).catch(()=>{});toast('Скопировано — вставь в Telegram')};
 $('#b-search').onclick=openSearch;$('#b-new').onclick=()=>openNew();
 document.addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
@@ -1129,8 +1333,9 @@ $('#b-sim').onclick=()=>{
   const p=P('nordline'),r=p.rounds[0],i=r.rows.findIndex(x=>x[2]==='wait');
   if(i<0){toast('Все правки уже закрыты');return}
   r.rows[i][2]='done';r.rows[i][3]='Claude внёс правку из чата';
-  $('#last-upd').textContent='Claude обновил файлы только что';
-  render();toast(`Claude изменил projects/nordline/edits/round-3.md → «${r.rows[i][0]}» сделано. Экран обновился сам`);
+  $('#last-upd').textContent='Claude запушил изменения только что';
+  const q=CQ.find(x=>x.st==='work');if(q){q.st='done';q.res='board/wire.json → концепт пересобран'}
+  render();toast(`Claude запушил projects/nordline/edits/round-3.md → «${r.rows[i][0]}» сделано. Приложение подтянуло из GitHub само`);
 };
 
 render();
