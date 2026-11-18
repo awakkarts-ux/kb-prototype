@@ -1,0 +1,1139 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>База — прототип</title>
+<style>
+:root{
+  --bg:#f4f4f3; --panel:#ffffff; --side:#ececea; --line:#dcdcd8; --line2:#c9c9c4;
+  --text:#1c1c1b; --muted:#6b6b67; --faint:#9a9a95; --hover:#e6e6e3; --accent:#1c1c1b; --accent-text:#fff;
+  --r:8px; --sh:0 8px 30px rgba(0,0,0,.12);
+}
+:root[data-theme="dark"]{
+  --bg:#161616; --panel:#1f1f1f; --side:#1a1a1a; --line:#2e2e2d; --line2:#3a3a38;
+  --text:#ececea; --muted:#a3a39e; --faint:#75756f; --hover:#2a2a29; --accent:#ececea; --accent-text:#161616;
+  --sh:0 8px 30px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex}
+a{color:inherit}
+button{font:inherit;color:inherit}
+.side{width:236px;flex:none;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 8px;gap:2px;height:100vh;position:sticky;top:0}
+.brand{display:flex;align-items:center;gap:8px;padding:6px 8px 12px;font-weight:600}
+.brand i{width:20px;height:20px;border-radius:5px;background:var(--text);display:block}
+.sbtn{display:flex;align-items:center;gap:8px;width:100%;padding:7px 8px;border:0;background:none;border-radius:6px;cursor:pointer;text-align:left;color:var(--muted)}
+.sbtn:hover{background:var(--hover);color:var(--text)}
+.sbtn.on{background:var(--panel);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+.sbtn .cnt{margin-left:auto;font-size:12px;color:var(--faint)}
+.sbtn kbd,.kbd{margin-left:auto;font:11px/1 system-ui;border:1px solid var(--line2);border-radius:4px;padding:3px 5px;color:var(--faint)}
+.sbtn.dis{opacity:.5}
+.sep{height:1px;background:var(--line);margin:8px 6px}
+.sfoot{margin-top:auto;font-size:12px;color:var(--faint);padding:8px;display:flex;flex-direction:column;gap:6px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3aa55d;margin-right:6px}
+main{flex:1;min-width:0;overflow:auto;height:100vh}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 32px 64px}
+.crumbs{font-size:12px;color:var(--faint);margin-bottom:6px}
+.crumbs a{text-decoration:none;cursor:pointer}.crumbs a:hover{color:var(--text)}
+h1{font-size:24px;line-height:1.2;margin:0 0 4px;font-weight:650;letter-spacing:-.01em}
+h2{font-size:16px;margin:0;font-weight:600}
+h3{font-size:14px;margin:0;font-weight:600}
+.sub{color:var(--muted);margin:0 0 20px}
+.head{display:flex;align-items:flex-end;gap:12px;margin-bottom:20px}
+.head .sub{margin:0}
+.head .grow{flex:1}
+.btn{border:1px solid var(--line2);background:var(--panel);border-radius:6px;padding:6px 12px;cursor:pointer}
+.btn:hover{background:var(--hover)}
+.btn.pri{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.btn.pri:hover{opacity:.9}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.w{padding:16px;display:flex;flex-direction:column;gap:10px;min-height:180px}
+.w .wh{display:flex;align-items:center;gap:8px;cursor:pointer}
+.w .wh:hover h2{text-decoration:underline}
+.w .wh .n{color:var(--faint);font-size:13px}
+.w .wh .go{margin-left:auto;color:var(--faint)}
+.c4{grid-column:span 4}.c6{grid-column:span 6}.c8{grid-column:span 8}.c12{grid-column:span 12}
+.list{display:flex;flex-direction:column}
+.li{display:flex;align-items:center;gap:10px;padding:8px 6px;border-top:1px solid var(--line);cursor:pointer;border-radius:4px}
+.li:first-child{border-top:0}
+.li:hover{background:var(--hover)}
+.li .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li .m{color:var(--faint);font-size:12px;white-space:nowrap}
+.empty{color:var(--faint);font-size:13px;padding:8px 6px}
+.st{font-size:12px;white-space:nowrap;color:var(--muted)}
+.chk{width:16px;height:16px;border:1.5px solid var(--line2);border-radius:4px;flex:none;display:grid;place-items:center;cursor:pointer;background:var(--panel)}
+.chk.on{background:var(--text);border-color:var(--text);color:var(--bg);font-size:11px}
+.done .t{text-decoration:line-through;color:var(--faint)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.tab{border:0;background:none;padding:8px 12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab.on{color:var(--text);border-color:var(--text)}
+.tab .n{color:var(--faint);font-size:12px;margin-left:4px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.fbtn{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 10px;cursor:pointer;font-size:13px;color:var(--muted)}
+.fbtn.on{border-color:var(--text);color:var(--text)}
+table{width:100%;border-collapse:collapse}
+th{font-weight:500;color:var(--faint);font-size:12px;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.row{cursor:pointer}
+tr.row:hover td{background:var(--hover)}
+.prog{height:4px;background:var(--line);border-radius:2px;overflow:hidden;min-width:80px}
+.prog i{display:block;height:100%;background:var(--text)}
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.col{background:var(--side);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:8px;min-height:200px}
+.col h3{font-size:13px;color:var(--muted);padding:2px 4px}
+.pc{padding:10px 12px;cursor:pointer}
+.pc:hover{border-color:var(--line2)}
+.pc .k{font-size:12px;color:var(--faint);margin-top:4px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.sec{padding:16px;margin-bottom:16px}
+.sec h2{margin-bottom:10px}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:13px}
+.kv span:nth-child(odd){color:var(--faint)}
+.pipe{display:flex;flex-direction:column}
+.step{display:grid;grid-template-columns:34px 1fr 190px;gap:8px;align-items:center;padding:7px 6px;border-top:1px solid var(--line)}
+.step:first-child{border-top:0}
+.step .num{color:var(--faint);font-size:12px}
+.step .nm{min-width:0}
+.step .note{display:block;font-size:12px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.step.flash{animation:fl 1.2s}
+@keyframes fl{0%{background:var(--hover)}100%{background:transparent}}
+select{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 6px;width:100%}
+.dec{padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.dec:first-of-type{border-top:0}
+.dec b{font-weight:500;color:var(--faint);margin-right:6px}
+.round{margin-bottom:16px}
+.rh{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+.rh .grow{flex:1}
+.rh .m{color:var(--faint);font-size:12px}
+.rbody{padding:0 16px 14px}
+.rbody table td:nth-child(1){width:34px;color:var(--faint)}
+.rbody table td:nth-child(2){width:200px;color:var(--muted)}
+.rbody table td:nth-child(4){width:190px}
+.rfoot{display:flex;align-items:center;gap:12px;padding-top:12px}
+.warn{font-size:13px;color:var(--muted)}
+.kb{display:grid;grid-template-columns:240px minmax(0,1fr);gap:16px;align-items:start}
+.tree{padding:8px}
+.tree .g{font-size:12px;color:var(--faint);padding:10px 8px 4px}
+.tree .it{padding:6px 8px;border-radius:5px;cursor:pointer;font-size:13px}
+.tree .it:hover{background:var(--hover)}
+.tree .it.on{background:var(--hover);font-weight:500}
+.page{padding:28px 32px;min-height:420px}
+.page .meta{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--faint);margin:6px 0 20px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.page .body p{margin:0 0 12px}
+.page .body ul{margin:0 0 12px;padding-left:20px}
+.page .body li{margin-bottom:4px}
+.page .body[contenteditable="true"]{outline:1px dashed var(--line2);outline-offset:8px;border-radius:2px}
+.refs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.ref{overflow:hidden;cursor:default}
+.ref .shot{aspect-ratio:16/10;background:repeating-linear-gradient(135deg,var(--side),var(--side) 8px,var(--bg) 8px,var(--bg) 16px);display:grid;place-items:center;color:var(--faint);font-size:12px;border-bottom:1px solid var(--line)}
+.ref .b{padding:10px 12px;display:flex;align-items:center;gap:8px}
+.ref .b .t{flex:1;min-width:0}
+.ref .b .t div:last-child{font-size:12px;color:var(--faint)}
+.ib{border:1px solid var(--line);background:var(--panel);border-radius:6px;width:30px;height:28px;cursor:pointer;color:var(--faint)}
+.ib.on{border-color:var(--text);color:var(--text)}
+.inb{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+.inb:first-child{border-top:0}
+.inb .ico{width:32px;height:32px;border-radius:6px;background:var(--side);display:grid;place-items:center;font-size:12px;color:var(--muted);flex:none}
+.inb .t{flex:1;min-width:0}
+.inb .t div:last-child{font-size:12px;color:var(--faint)}
+.inb select{width:170px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.25);display:none;align-items:flex-start;justify-content:center;padding-top:12vh;z-index:10}
+.ov.on{display:flex}
+.modal{width:min(620px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--sh);overflow:hidden}
+.modal input,.modal textarea{width:100%;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;font:16px/1.4 system-ui;padding:16px 18px;outline:0}
+.modal textarea{min-height:110px;resize:vertical;font-size:14px}
+.mres{max-height:50vh;overflow:auto;padding:6px}
+.mres .g{font-size:12px;color:var(--faint);padding:8px 10px 4px}
+.mres .r{padding:8px 10px;border-radius:6px;cursor:pointer;display:flex;gap:10px}
+.mres .r .m{margin-left:auto;color:var(--faint);font-size:12px}
+.mres .r.sel,.mres .r:hover{background:var(--hover)}
+.mfoot{display:flex;gap:8px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.mfoot .grow{flex:1;font-size:12px;color:var(--faint)}
+.seg{display:flex;gap:4px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--text);color:var(--bg);padding:10px 14px;border-radius:8px;box-shadow:var(--sh);font-size:13px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none;z-index:20;max-width:380px}
+.toast.on{opacity:1;transform:none}
+.stub{padding:40px;text-align:center;color:var(--muted)}
+.note-proto{font-size:12px;color:var(--faint);border:1px dashed var(--line2);border-radius:6px;padding:8px 10px;margin-bottom:16px}
+.badge{font-size:11px;border:1px solid var(--line2);border-radius:999px;padding:1px 7px;color:var(--muted);white-space:nowrap}
+.badge.hot{border-color:var(--text);color:var(--text);font-weight:600}
+.in{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 8px;width:100%}
+textarea.in{min-height:56px;resize:vertical;font-size:13px;line-height:1.4}
+.row-f{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* Паспорт как документация дизайн-системы */
+.doc{display:grid;grid-template-columns:180px minmax(0,1fr);gap:36px;align-items:start}
+.doc-nav{position:sticky;top:16px;display:flex;flex-direction:column;gap:2px;font-size:13px}
+.doc-nav a{padding:5px 8px;border-radius:5px;color:var(--muted);text-decoration:none;cursor:pointer;display:flex;gap:10px}
+.doc-nav a span{color:var(--faint);font:12px/1.6 ui-monospace,Consolas,monospace}
+.doc-nav a:hover{background:var(--hover);color:var(--text)}
+.dsec{padding:32px 0 36px;border-top:1px solid var(--line)}
+.dsec:first-child{border-top:0;padding-top:4px}
+.dsec .eb{font:12px/1 ui-monospace,Consolas,monospace;color:var(--faint);margin-bottom:10px}
+.dsec h2{font-size:24px;font-weight:650;letter-spacing:-.01em;margin-bottom:6px}
+.dsec .lead{color:var(--muted);margin:0 0 20px;max-width:640px}
+.spec{display:grid;grid-template-columns:170px 1fr;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--panel)}
+.spec>span{padding:10px 14px;border-top:1px solid var(--line);font-size:13px}
+.spec>span:nth-child(-n+2){border-top:0}
+.spec>span:nth-child(odd){color:var(--faint);background:var(--side)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.tile{padding:14px;display:flex;flex-direction:column;gap:6px;cursor:pointer}
+.tile:hover{border-color:var(--line2)}
+.tile .k{font-size:12px;color:var(--faint)}
+/* План: график */
+.gt{min-width:760px}
+.gt-row{display:grid;grid-template-columns:210px 1fr 70px;align-items:center;border-bottom:1px solid var(--line)}
+.gt-name{padding:9px 10px 9px 0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gt-track{position:relative;height:36px;background-image:linear-gradient(to right,var(--line) 1px,transparent 1px);background-size:calc(100% / var(--n)) 100%}
+.gt-days{display:grid;grid-template-columns:repeat(var(--n),1fr);font-size:11px;line-height:1.3;color:var(--faint);text-align:center;padding:6px 0}
+.gt-days .on{color:var(--text);font-weight:650}
+.gt-plan{position:absolute;top:8px;height:20px;border:1.5px dashed var(--line2);border-radius:4px}
+.gt-fact{position:absolute;top:12px;height:12px;background:var(--text);border-radius:3px;opacity:.8}
+.gt-fact.late{background:repeating-linear-gradient(45deg,var(--text),var(--text) 4px,var(--muted) 4px,var(--muted) 8px)}
+.gt-today{position:absolute;top:0;bottom:0;width:2px;background:var(--text);opacity:.45}
+.gt-lag{font-size:12px;text-align:right;color:var(--text);font-weight:600}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--faint);margin-top:10px;align-items:center}
+.legend i{display:inline-block;width:22px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+/* Календарь недели */
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.day{padding:10px;min-height:280px;display:flex;flex-direction:column;gap:6px}
+.day.off{background:var(--side);border-style:dashed}
+.day.now{box-shadow:0 0 0 1.5px var(--text)}
+.day .dh{display:flex;align-items:baseline;gap:6px;font-size:13px;color:var(--muted);margin-bottom:4px;flex-wrap:wrap}
+.day .dh b{font-size:18px;color:var(--text)}
+.chip{font-size:12px;border:1px solid var(--line);border-radius:5px;padding:5px 7px;cursor:pointer;background:var(--panel);line-height:1.35}
+.chip:hover{border-color:var(--line2)}
+.chip .p{color:var(--faint);display:block;font-size:11px}
+.chip.stg{background:transparent;border-style:dashed;color:var(--muted)}
+.chip.dn{text-decoration:line-through;color:var(--faint)}
+/* Холст */
+.cv{position:relative;height:640px;overflow:hidden;background-color:var(--bg);background-image:radial-gradient(var(--line2) 1px,transparent 1px);background-size:22px 22px;cursor:grab;user-select:none;touch-action:none}
+.cv.pan{cursor:grabbing}
+.cv-in{position:absolute;left:0;top:0;transform-origin:0 0}
+.cv svg{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+.nd{position:absolute;width:220px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:move}
+.nd .nh{display:flex;gap:8px;align-items:center;padding:9px 12px;font-size:13px;font-weight:600}
+.nd .nh .k{margin-left:auto;font-size:11px;color:var(--faint);font-weight:400;white-space:nowrap}
+.nd .nb{padding:0 12px 10px;font-size:12px;color:var(--muted)}
+.nd .img{aspect-ratio:16/10;background:repeating-linear-gradient(135deg,var(--side),var(--side) 8px,var(--bg) 8px,var(--bg) 16px);display:grid;place-items:center;color:var(--faint);font-size:11px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden}
+.nd .img img{width:100%;height:100%;object-fit:cover;display:block}
+.nd.t-ref{width:200px}
+.nd.t-hub{border-color:var(--text)}
+.nd.sel{box-shadow:0 0 0 2px var(--text)}
+.cv-tools{position:absolute;left:12px;top:12px;right:12px;display:flex;gap:6px;z-index:2;flex-wrap:wrap;pointer-events:none}
+.cv-tools>*{pointer-events:auto}
+.cv-zoom{position:absolute;left:12px;bottom:12px;display:flex;gap:6px;align-items:center;z-index:2;font-size:12px;color:var(--muted)}
+.mini{position:absolute;right:12px;bottom:12px;width:180px;height:112px;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;z-index:2}
+.mini i{position:absolute;background:var(--line2);border-radius:2px}
+.mini b{position:absolute;border:1.5px solid var(--text);border-radius:2px}
+/* Доска решений */
+.bd-node{margin-bottom:20px;padding:22px}
+.bd-node .bh{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.bd-node .lead{color:var(--muted);font-size:13px;margin:4px 0 0}
+.bd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:16px}
+.bd-item{overflow:hidden;display:flex;flex-direction:column}
+.bd-item .shot{aspect-ratio:4/3;background:repeating-linear-gradient(135deg,var(--side),var(--side) 8px,var(--bg) 8px,var(--bg) 16px);display:grid;place-items:center;color:var(--faint);font-size:12px;border-bottom:1px solid var(--line);text-align:center;padding:10px}
+.bd-item .shot.tall{aspect-ratio:3/4}
+.bd-item .b{padding:10px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
+.bd-item .b .t div:last-child{font-size:12px;color:var(--faint)}
+.verd{display:flex;gap:4px;flex-wrap:wrap}
+.verd button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 9px;cursor:pointer;font-size:12px;color:var(--muted)}
+.verd button.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.bd-foot{display:flex;gap:10px;align-items:flex-start;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.rbtn{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel);cursor:pointer;font-size:16px;flex:none}
+.rbtn.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.lab{font:11px/1 ui-monospace,Consolas,monospace;color:var(--faint);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+.varsw{display:flex;gap:4px;margin-top:12px}
+/* Документы: конструктор */
+.ed{display:grid;grid-template-columns:220px minmax(0,1fr) 260px;gap:16px;align-items:start}
+.ed .side-p{padding:12px;position:sticky;top:16px}
+.blk{display:flex;gap:6px;align-items:center;padding:6px 6px;border-radius:5px;font-size:13px}
+.blk:hover{background:var(--hover)}
+.blk .h{color:var(--faint);cursor:grab}
+.blk .t{flex:1}
+.blk button{border:0;background:none;color:var(--faint);cursor:pointer;padding:0 3px}
+.blk button:hover{color:var(--text)}
+.a4{background:#fff;color:#1c1c1b;max-width:640px;min-height:900px;margin:0 auto;padding:56px 60px;box-shadow:var(--sh);border-radius:2px;font-size:13px;line-height:1.6}
+.a4 h4{font-size:13px;margin:18px 0 6px}
+.a4 p{margin:0 0 8px}
+.a4[contenteditable="true"]{outline:2px dashed #9a9a95;outline-offset:6px}
+.var{background:#ececea;border:1px dashed #b5b5b0;border-radius:4px;padding:0 4px;white-space:nowrap}
+.var.ok{border-style:solid;background:#f4f4f3}
+.skel i{display:block;height:8px;background:#ececea;border-radius:3px;margin:9px 0}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;font-size:12px;color:var(--faint)}
+/* КП */
+.kp-sum{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+.kp-sum>div{padding:14px 16px;border-left:1px solid var(--line)}
+.kp-sum>div:first-child{border-left:0}
+.kp-sum .v{font-size:22px;font-weight:650;line-height:1.2}
+.kp-sum .l{font-size:12px;color:var(--faint)}
+.kp td .in{padding:4px 6px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+.stats .card{padding:16px}
+.stats .v{font-size:24px;font-weight:650}
+.stats .l{font-size:12px;color:var(--faint)}
+@media (max-width:1100px){.c4{grid-column:span 6}.c8{grid-column:span 12}.two{grid-template-columns:1fr}.board{grid-template-columns:repeat(2,1fr)}.doc{grid-template-columns:1fr}.doc-nav{display:none}.ed{grid-template-columns:1fr}.ed .side-p{position:static}.week{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.side{display:none}.wrap{padding:16px}.c4,.c6{grid-column:span 12}.kb{grid-template-columns:1fr}.step{grid-template-columns:28px 1fr}.step select{grid-column:2}.week{grid-template-columns:1fr}.kp-sum,.stats{grid-template-columns:repeat(2,1fr)}.ba{grid-template-columns:1fr}.spec{grid-template-columns:1fr}.a4{padding:28px 22px}}
+</style>
+</head>
+<body>
+
+<aside class="side">
+  <div class="brand"><i></i>База</div>
+  <button class="sbtn" data-go="dash">Дашборд</button>
+  <button class="sbtn" data-go="today">Дела на сегодня <span class="cnt" id="c-today"></span></button>
+  <button class="sbtn" data-go="cal">Календарь недели <span class="cnt" id="c-cal"></span></button>
+  <button class="sbtn" data-go="inbox">Входящие <span class="cnt" id="c-inbox"></span></button>
+  <button class="sbtn" data-go="projects">Проекты <span class="cnt" id="c-proj"></span></button>
+  <button class="sbtn" data-go="kb">База знаний</button>
+  <button class="sbtn" data-go="refs">Референсы и вкус</button>
+  <button class="sbtn" data-go="docsall">Документы и КП</button>
+  <button class="sbtn" data-go="money">Клиенты и деньги</button>
+  <div class="sep"></div>
+  <button class="sbtn" id="b-search">Поиск <kbd>Ctrl K</kbd></button>
+  <button class="sbtn" id="b-new">Создать <kbd>Ctrl N</kbd></button>
+  <div class="sfoot">
+    <div><span class="dot"></span>Папка подключена · офлайн</div>
+    <div id="last-upd">Claude обновил файлы 2 мин назад</div>
+    <button class="btn" id="b-theme" style="font-size:12px;padding:4px 8px">Тёмная тема</button>
+    <button class="btn" id="b-sim" style="font-size:12px;padding:4px 8px" title="Показать, как приложение подхватывает изменения файлов">Симуляция: Claude изменил файл</button>
+  </div>
+</aside>
+
+<main><div class="wrap" id="view"></div></main>
+
+<div class="ov" id="ov-search"><div class="modal">
+  <input id="q" placeholder="Найти проект, правку, страницу базы…" autocomplete="off">
+  <div class="mres" id="qres"></div>
+  <div class="mfoot"><span class="grow">↑↓ — выбрать · Enter — открыть · Esc — закрыть</span></div>
+</div></div>
+
+<div class="ov" id="ov-new"><div class="modal">
+  <div class="seg" id="new-type"></div>
+  <textarea id="new-text" placeholder="Текст, ссылка или вставьте скриншот…"></textarea>
+  <div class="mfoot"><span class="grow">Попадёт во Входящие — разберёте потом</span><button class="btn" data-close>Отмена</button><button class="btn pri" id="new-save">Сохранить</button></div>
+</div></div>
+
+<div class="ov" id="ov-client"><div class="modal" style="width:min(720px,94vw)">
+  <div style="padding:16px 18px;border-bottom:1px solid var(--line)"><h2>Новый клиент</h2><div style="font-size:12px;color:var(--faint);margin-top:4px">Заполни руками или вставь реквизиты текстом — Claude разнесёт по полям</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 14px;padding:14px 18px">
+    <label class="field" style="grid-column:span 2">Название<input class="in" id="cl-name" placeholder="ООО «…»"></label>
+    <label class="field">ИНН<input class="in" placeholder="10 или 12 цифр"></label>
+    <label class="field">КПП<input class="in"></label>
+    <label class="field">ОГРН<input class="in"></label>
+    <label class="field">Контакт<input class="in" placeholder="Имя, Telegram или почта"></label>
+    <label class="field" style="grid-column:span 2">Юридический адрес<input class="in"></label>
+    <label class="field">Банк и БИК<input class="in"></label>
+    <label class="field">Расчётный счёт<input class="in"></label>
+    <label class="field" style="grid-column:span 2">Реквизиты текстом<textarea class="in" placeholder="Вставь карточку предприятия из письма или docx"></textarea></label>
+  </div>
+  <div class="mfoot"><button class="btn" id="cl-parse">Разобрать реквизиты (Claude)</button><span class="grow"></span><button class="btn" data-close>Отмена</button><button class="btn pri" id="cl-save">Сохранить</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- Данные: реальные паспорта и файлы из design-agent-main на 05.10.2026 ---------- */
+const ST = {
+  done:{i:'✅',t:'Готово'}, work:{i:'🔄',t:'В работе'}, art:{i:'🎨',t:'Нужен арт-директор'},
+  block:{i:'⛔',t:'Заблокировано'}, old:{i:'⚠️',t:'Устарело'}, none:{i:'—',t:'Не начато'}, skip:{i:'—',t:'Пропущено'}
+};
+const ED = {
+  new:'Новая', work:'В работе', done:'Сделано', checked:'Проверено', wait:'Ждём клиента', rejected:'Отклонена'
+};
+const PIPE_FIGMA = ['Бриф','Конкуренты','Гипотезы','Структура','Дизайн-система / стиль','Концепт','Остальные страницы','Адаптив','Перенос в Figma','Передача'];
+const PIPE_TILDA = ['Бриф','Конкуренты','Гипотезы','Структура','Дизайн-система / стиль','Концепт','Остальные страницы','Адаптив','Перенос в Figma','Вёрстка на Tilda','Проверка и запуск'];
+const NUMS_F = ['1','2','2.5','3','4','5','6','7','8','9'];
+const NUMS_T = ['1','2','2.5','3','4','5','6','7','8','9','10'];
+function steps(type, sts, notes={}){
+  const names = type==='tilda'?PIPE_TILDA:PIPE_FIGMA, nums = type==='tilda'?NUMS_T:NUMS_F;
+  return names.map((n,i)=>({n:nums[i],name:n,st:sts[i]||'none',note:notes[i]||''}));
+}
+const TYPES = {figma:'Дизайн в Figma', tilda:'Сайт на Tilda', app:'Приложение', presale:'Пресейл'};
+const PSTATUS = {work:'В работе', wait:'Ждём клиента', pause:'Пауза', done:'Сдан'};
+
+const projects = [
+ {id:'nordline', name:'Nordline', client:'ООО «Альфа-Трейд», через менеджера', type:'figma', status:'work',
+  what:'Дизайн сайта nordline.example в Figma (Desktop + Mobile). Без разработки', start:'25.09.2026', deadline:'15 раб. дней по договору',
+  links:[['Notion-хаб','Nordline — сайт'],['Figma','Nordline — концепт 2'],['Референсы','Beanro, Stone Sip, Kreme'],['Концепт онлайн','GitHub Pages'],['Папка','projects/nordline/']],
+  steps:steps('figma',['done','done','done','old','art','work','work','done','old','none'],
+   {3:'Клиент убрал «Оригинал» и «Оптовикам» 28.09 — Notion не обновлён',4:'Выбрать display-шрифт с кириллицей, чернила, цвет CTA',5:'Концепт 2 выбран клиентом 28.09, правки внесены',6:'Страница товара c48 пересобрана 03.10',7:'Проверено замером 1440/1024/768/375/320',8:'Правки 28.09 внесены только в HTML'}),
+  decisions:[
+   ['03.10','Основной вариант — концепт 2, бывший index-v2 → concept-2/index.html'],
+   ['01.10','Все блоки в контейнере 1440; во всю ширину только фон, шапка и подвал'],
+   ['28.09','Одна общая форма «Связаться» — блоком внизу и всплывающим окном'],
+   ['25.09','Корзины и оплаты нет. Частник → маркетплейс, опт → заявка'],
+   ['25.09','Зона ответственности — только дизайн в Figma, разработчик на стороне клиента']],
+  questions:[['Клиенту','На какую почту заменить e-mail','Правки, раунд 3'],['Клиенту','На новом обороте в таблице 16% вместо 19% (8 кг) — так и должно быть?','Правки, раунд 3']],
+  rounds:[
+   {n:3,date:'02.10',source:'docx «Нордлайн правки от клиента» + Telegram',sent:false,rows:[
+    ['Главная / Оригинал','«Другой изготовитель — не оригинал» → «Дрожжи под ТМ Nordline теперь производятся исключительно в РФ…»','done',''],
+    ['c48 / Оборот','Новый оборот C48 + строка «Адрес производства: г. Энск, ул. Примерная, 1»','done',''],
+    ['Форма','Убрать согласие и ссылку на политику обработки ПД','done',''],
+    ['Главная','Новый блок «Производство» перед «Оригиналом»','done','Текст написан нами — показать клиенту'],
+    ['Продукция','Виски увеличить до размера соседей','checked',''],
+    ['Подвал','Полные реквизиты: ИНН/КПП, ОГРН, ОКТМО, адрес','checked',''],
+    ['Главная / Преимущества','Заменить на текст клиента «Премиальные дрожжи Nordline — это» (5 пунктов)','done',''],
+    ['c48 / Документы','Декларация ЕАЭС во вкладке «Документы»','done',''],
+    ['Подвал','Заменить e-mail','wait','Клиент не прислал адрес'],
+    ['c48 / Оборот','В таблице 16% вместо 19% (8 кг)','wait','Уточнить у клиента']]},
+   {n:2,date:'01.10',source:'docx «Дубль 2 сайт дрожжи (2)»',sent:true,rows:[
+    ['Первый экран','Вернуть к варианту 28.09: слева белое с лого, справа красное с пачками','checked',''],
+    ['О бренде','Убрать пачки из текста','checked',''],
+    ['Преимущества','Заголовок «Преимущества» над карточками 01–07','checked',''],
+    ['Все блоки','Заголовки слева + пояснение справа, на одной линии','checked',''],
+    ['Главная','Убрать блок «Срок зависит от температуры»','checked','На c48 режимы остались во вкладке'],
+    ['Продукция','Выровнять пачки в карточках по размеру','checked',''],
+    ['Продукция','Подписи «Крепость браги», «Вес пакета», «Срок брожения», «Состав»','checked','']]},
+   {n:1,date:'28.09',source:'docx «комменты Нордлайн», 16 пунктов',sent:true,rows:[
+    ['Шапка','Лого-надпись без змеи, меню одним стилем, кнопка «Связаться»','checked',''],
+    ['Главная','Удалить полосу доверия','checked',''],
+    ['Первый экран','Логотип со змеёй красным вместо заголовка, одна кнопка','checked',''],
+    ['Продукция','Только Нордлайн, без вкладок брендов и счётчиков','checked',''],
+    ['Главная','Удалить блоки «Как отличить оригинал» и опт','checked','Блок «Оригинал» вернули 01.10'],
+    ['Товар','Одно фото, логотип бренда вместо «Линейка»','checked','']]}
+  ]},
+ {id:'zarya', name:'Агрокомплекс «Заря»', client:'Агрокомплекс «Заря», регион', type:'tilda', status:'work',
+  what:'Редизайн zarya.example на Tilda — дизайн и вёрстка, упор на B2B и B2G', start:'10.09.2026', deadline:'—',
+  links:[['Сайт','zarya.example'],['Папка','projects/zarya/']],
+  steps:steps('tilda',['done','skip','skip','done','done','work','none','none','none','none','none']),
+  decisions:[], questions:[], rounds:[]},
+ {id:'termouchet', name:'Термоучёт', client:'ООО «Термоучёт», г. Энск', type:'figma', status:'work',
+  what:'UI/UX сайта-визитки: узлы учёта тепловой энергии', start:'09.09.2026', deadline:'—',
+  links:[['Папка','projects/termouchet-teplo/']],
+  steps:steps('figma',['done','none','none','work','work','work','none','none','none','none'],{5:'Прототип 11.09 отклонён, концепт с нуля'}),
+  decisions:[['29.09','Тексты клиента не сокращать']], questions:[], rounds:[]},
+ {id:'vector', name:'Шаг вперёд', client:'БФ «Шаг вперёд»', type:'tilda', status:'work',
+  what:'Доработка сайта на Tilda (ТЗ из 9 правок) + концепт новой главной', start:'06.2026', deadline:'—',
+  links:[['Папка','projects/vectortofuture/']],
+  steps:steps('tilda',['done','none','none','done','done','done','work','work','old','none','none']),
+  decisions:[], questions:[], rounds:[]},
+ {id:'autoparts', name:'AutoParts X', client:'ООО «Медиа Студио»', type:'figma', status:'wait',
+  what:'Отрисовка 10 ключевых блоков сайта каталога автозапчастей', start:'04.08.2026', deadline:'—',
+  links:[['Папка','projects/autoparts/']],
+  steps:steps('figma',['done','done','none','done','done','done','done','done','work','block']),
+  decisions:[], questions:[], rounds:[]},
+ {id:'marzhapro', name:'МаржаПро', client:'МаржаПро — аналитика для селлеров', type:'figma', status:'wait',
+  what:'Страница услуги «Аналитика прибыли Wildberries»', start:'—', deadline:'—',
+  links:[['Папка','projects/marzhapro/']],
+  steps:steps('figma',['done','none','none','done','done','done','none','art','none','block']),
+  decisions:[], questions:[], rounds:[]},
+ {id:'agroservis', name:'АгроСервис', client:'ООО «АгроСервис», г. Энск', type:'presale', status:'work',
+  what:'Пресейл — КП на редизайн сайта на Tilda под ключ', start:'01.10.2026', deadline:'—',
+  links:[['Сайт','agroservis.su'],['Папка','projects/agroservis/']],
+  steps:[{n:'0',name:'КП',st:'work',note:''}].concat(steps('tilda',[])),
+  decisions:[], questions:[], rounds:[]},
+ {id:'knowledge-base', name:'База знаний', client:'Я сам', type:'app', status:'work',
+  what:'Личная база знаний + своё приложение', start:'05.10.2026', deadline:'—',
+  links:[['Папка','projects/knowledge-base/']],
+  steps:[['1','Суть и рамки','done'],['2','Инвентаризация','done'],['3','Принципы (интервью)','work'],['4','Процессы и стандарты','done'],['5','Аналоги','done'],['6','Архитектура','work'],['7','Карта функций','done'],['8','Прототип → Figma','work'],['9','Код приложения','none']].map(([n,name,st])=>({n,name,st,note:''})),
+  decisions:[['07.10','MVP-версии нет — в прототип идёт весь функционал'],['07.10','Паспорт — оформленная страница с секциями, как документация дизайн-системы'],['05.10','Только ПК, локально, офлайн, бесплатно'],['05.10','Работа через чат с Claude, приложение — окно просмотра с автообновлением'],['05.10','Стартовый экран — дашборд с окошками']],
+  questions:[], rounds:[]}
+];
+
+const inbox = [
+ {id:1, kind:'Ссылка', text:'beanro.webflow.io — нравится, как собран «О бренде»', meta:'Ctrl+N · сегодня', proj:'', type:'Референс'},
+ {id:2, kind:'Файл', text:'Запись встречи 01.10.2026 15_11_28.webm', meta:'перетащен файл · 01.10', proj:'nordline', type:'Созвон'},
+ {id:3, kind:'Заметка', text:'Проверить у клиента: 16% или 19% на обороте C48', meta:'Ctrl+N · 02.10', proj:'nordline', type:'Правка'},
+ {id:4, kind:'Заметка', text:'Скилл переноса в Figma — донастроить на конкретном макете', meta:'Ctrl+N · 05.10', proj:'knowledge-base', type:'Задача'}
+];
+
+const refs = [
+ ['Foster & Reeves','Сетка линиями через всю страницу, кислотно-зелёный акцент','like'],
+ ['Neatenn','Заголовок со смещением 16%, текст темнеет при скролле','like'],
+ ['Nikka','Двухтоновые заголовки, мягкие радиусы','like'],
+ ['Outdoor','Кислотно-зелёный точечно, заголовки с 34% ширины','like'],
+ ['Полихим','Шестиугольник из логотипа как маркер, цифры лесенкой','like'],
+ ['Dapper','Засечка курсивом как интонация, зерно','like'],
+ ['Planeng','Видео в hero, огромный логотип, бирюза','like'],
+ ['ТЕСАРТ','Квадрат-маркер, стеклянные карточки поверх надписи','like'],
+ ['ParaType','Колонки по 23%, коралловый акцент','like'],
+ ['АВ-центр','Шапка-таблица со счётчиками, синий #1249E8','like'],
+ ['Athelas','Мягкие карточки, сервисный тон','like']
+].map(([name,why,mark],i)=>({id:i+1,name,why,mark,proj:''}));
+
+const kb = [
+ {g:'Принципы', items:[
+  {id:'p-success', t:'Что такое успех', meta:['Черновик','из интервью 05.10'], body:'<p>Успех — дизайн запустился и работает. Чем масштабнее запущенный проект, тем лучше.</p><ul><li>Мерило удачного редизайна — клиент утвердил, правок мало.</li><li>Хороший проект живёт годами на моём дизайне (Уматур).</li></ul>'},
+  {id:'p-client', t:'Работа с клиентом', meta:['Черновик','из интервью 05.10'], body:'<ul><li>Без брифа работу не начинаю.</li><li>Клиент лучше знает свой продукт — правки принимаю с пониманием.</li><li>Переписку с клиентом веду только сам.</li><li>Концепт показываю прототипом; цель — презентация с объяснением каждого решения.</li></ul>'},
+  {id:'p-defend', t:'Защита решений', meta:['Подтверждено','из интервью 05.10'], body:'<p>Аргументирую один раз, с примером с известного сайта. Если клиент во второй или третий раз настаивает — делаю как он сказал. Ему с проектом жить.</p>'}]},
+ {g:'Процессы', items:[
+  {id:'pr-cycle', t:'Жизненный цикл проекта', meta:['v0','processes.md'], body:'<p>Отклик → Договор и предоплата → Бриф → Конкуренты → Гипотезы → Структура → Дизайн-система → Концепт → Остальные страницы → Адаптив → Figma → Передача → Акт и оплата → Кейс.</p><p>Для Tilda после переноса в Figma — Вёрстка на Tilda → Проверка и запуск.</p>'},
+  {id:'pr-edits', t:'Журнал правок', meta:['v0','processes.md'], body:'<ul><li>Каждая правка — строка: источник, экран или блок, текст, статус.</li><li>Перед отправкой клиенту — сверка: все правки раунда закрыты.</li><li>Число правок в раунде — метрика качества.</li></ul>'}]},
+ {g:'Стандарты', items:[
+  {id:'s-figma', t:'Figma', meta:['v0','standards.md'], body:'<ul><li>Цвета — Color Styles, текст — Text Styles, радиусы и отступы — переменные.</li><li>Состояния Default / Hover / Focused / Disabled / Error — только интерактивным элементам.</li><li>Три разрешения: Desktop (по проекту), Tablet, Mobile 375 или 390.</li><li>Перед записью перечитать структуру узла — ты правишь файл руками.</li></ul>'},
+  {id:'s-qa', t:'Вёрстка и проверка', meta:['v0','standards.md'], body:'<ul><li>Не называть «готово» без сверки с реальными значениями Figma.</li><li>«Пиксель в пиксель» — значения Figma напрямую, без своих решений.</li><li>Из концепта снимать анатомию элементов, а не только токены.</li></ul>'}]},
+ {g:'Уроки', items:[
+  {id:'l-anat', t:'Снимать элементы, а не только токены', meta:['05.10','интервью','→ стандарт «Вёрстка и проверка»'], body:'<p><b>Что случилось.</b> Из концепта снимались цвета и сетка, а кнопки и карточки рисовались «примерно как на скрине».</p><p><b>Правило.</b> По каждому ключевому элементу мерить размеры, отступы, радиус, обводку, иконку.</p>'},
+  {id:'l-notion', t:'Проекты в Notion — только в «Проекты в работе»', meta:['28.09','Nordline','→ скилл brief-analyzer'], body:'<p><b>Что случилось.</b> Хаб проекта оказался черновиком в корне Notion.</p><p><b>Правило.</b> Новые проекты — только внутри «Портфолио / 🗂 Проекты в работе».</p>'},
+  {id:'l-hyp', t:'Гипотезы не пропускать', meta:['25.09','Nordline','→ стандарт «Процесс»'], body:'<p><b>Что случилось.</b> Дважды предложил пропустить гипотезы на маленьком сайте.</p><p><b>Правило.</b> Гипотезы — обоснование структуры, без них её нечем защитить перед клиентом.</p>'},
+  {id:'l-blocks', t:'blocks-db: 4–6 страниц на сайт', meta:['23.09','blocks-db','→ скилл blocks-db'], body:'<p><b>Правило.</b> Не только главная: у магазинов обязательно каталог и карточка товара.</p>'}]},
+ {g:'Тех. заметки', items:[
+  {id:'t-figma', t:'Figma MCP — грабли', meta:['~45 заметок','память'], body:'<ul><li>MCP видит только Google Fonts, не системные шрифты.</li><li>upload_assets — партиями не больше 20, проверять placedOnNodeId.</li><li>WebP не рисуется — конвертировать в JPEG.</li></ul>'},
+  {id:'t-tilda', t:'Tilda: каталог и Потоки', meta:['память'], body:'<ul><li>T778 превращается в t-store при подключении Каталога.</li><li>Mark без фото не рисуется.</li><li>У карточек Потока pointer-events:none.</li></ul>'}]},
+ {g:'Шаблоны', items:[
+  {id:'tpl-passport', t:'Паспорт проекта', meta:['templates/PROJECT.md'], body:'<p>Ссылки · Состояние по шагам · Решения · Открытые вопросы · Ограничения. Паспорт не дублирует контент — только ссылки, статусы и решения.</p>'}]}
+];
+
+/* ---------- Даты ---------- */
+const TODAY_S='07.10';
+const D=s=>{const[d,m]=s.split('.').map(Number);return new Date(2026,m-1,d)};
+const F=t=>String(t.getDate()).padStart(2,'0')+'.'+String(t.getMonth()+1).padStart(2,'0');
+const TODAY=D(TODAY_S);
+const WD=['вс','пн','вт','ср','чт','пт','сб'];
+const isWork=t=>t.getDay()%6!==0;
+function workDays(from,n){const a=[];const r=new Date(from);while(a.length<n){if(isWork(r))a.push(new Date(r));r.setDate(r.getDate()+1)}return a}
+const okDate=s=>/^\d{2}\.\d{2}$/.test(s||'');
+
+/* ---------- План и задачи (демо-данные; доли этапов задаёт пользователь) ---------- */
+const plans = {
+ 'nordline':{start:'25.09',tpl:'Сайт в Figma',total:15,stages:[['Бриф, конкуренты, гипотезы',2,0],['Структура',1,0],['Дизайн-система / стиль',1,0],['Концепт',3,2],['Остальные страницы',4,0],['Адаптив',2,0],['Перенос в Figma',1,0],['Передача',1,0]]}
+};
+const tasks = [
+ {id:1,pid:'nordline',step:'Концепт',text:'Показать клиенту блок «Производство» — текст писали мы',date:'07.10',done:false,moved:0},
+ {id:2,pid:'nordline',step:'Концепт',text:'Дожать у клиента e-mail для подвала',date:'05.10',done:false,moved:2},
+ {id:3,pid:'nordline',step:'Перенос в Figma',text:'Перенести правки 28.09 из HTML в Figma',date:'08.10',done:false,moved:0},
+ {id:4,pid:'nordline',step:'Остальные страницы',text:'Сверить c48 после правок раунда 3',date:'06.10',done:true,moved:0},
+ {id:5,pid:'termouchet',step:'Концепт',text:'Концепт главной с нуля',date:'07.10',done:false,moved:0},
+ {id:6,pid:'termouchet',step:'Структура',text:'Структура страницы услуги',date:'08.10',done:false,moved:0},
+ {id:7,pid:'agroservis',step:'КП',text:'Заполнить этапы и сроки в КП',date:'06.10',done:false,moved:1},
+ {id:8,pid:'agroservis',step:'КП',text:'Подобрать 2–3 кейса для КП',date:'08.10',done:false,moved:0},
+ {id:9,pid:'zarya',step:'Концепт',text:'Концепт главной — продолжить',date:'08.10',done:false,moved:0},
+ {id:10,pid:'vector',step:'Остальные страницы',text:'Внутренние страницы по ТЗ',date:'08.10',done:false,moved:0},
+ {id:11,pid:'marzhapro',step:'Адаптив',text:'Решить по адаптиву (🎨)',date:'09.10',done:false,moved:0},
+ {id:12,pid:'knowledge-base',step:'Прототип → Figma',text:'Перенести идеи в прототип',date:'07.10',done:true,moved:0}
+];
+const effDate=x=>{const d=D(x.date);return !x.done&&d<TODAY?TODAY:d};
+function planCalc(pid){
+  const pl=plans[pid];if(!pl||!okDate(pl.start))return null;
+  const sum=pl.stages.reduce((a,s)=>a+(+s[1]||0),0),lag=pl.stages.reduce((a,s)=>a+(+s[2]||0),0);
+  if(!sum)return null;
+  const n=sum+lag,days=workDays(D(pl.start),n);let pi=0,fi=0;
+  const st=pl.stages.map(([name,d,l])=>{d=+d||0;l=+l||0;const r={name,d,lag:l,ps:pi,fs:fi};pi+=d;fi+=d+l;return r});
+  const ti=days.findIndex(x=>F(x)===TODAY_S);
+  return {pl,days,st,n,ti,sum,lag,endPlan:days[sum-1],endFact:days[n-1],cur:st.findIndex(s=>ti>=s.fs&&ti<s.fs+s.d+s.lag)};
+}
+
+/* ---------- Документы и шаблоны ---------- */
+const TPL = [
+ {id:'tpl-dog-ui',t:'Договор — UI/UX дизайн',k:'Договор'},{id:'tpl-dog-tilda',t:'Договор — сайт на Tilda под ключ',k:'Договор'},
+ {id:'tpl-akt',t:'Акт сдачи-приёмки',k:'Акт'},{id:'tpl-kp',t:'Коммерческое предложение',k:'КП'},
+ {id:'tpl-brief',t:'Бриф для клиента',k:'Бриф'},{id:'tpl-tz',t:'Техническое задание',k:'ТЗ'},{id:'tpl-handoff',t:'Передача разработчику',k:'Передача'}
+];
+const TBLOCKS = {
+ 'tpl-dog-ui':['Шапка и стороны','Предмет договора','Сроки','Стоимость и порядок оплаты','Порядок сдачи-приёмки','Права и исходники','Ответственность сторон','Реквизиты и подписи'],
+ 'tpl-dog-tilda':['Шапка и стороны','Предмет договора','Сроки','Стоимость и порядок оплаты','Вёрстка на Tilda и запуск','Порядок сдачи-приёмки','Права и исходники','Реквизиты и подписи'],
+ 'tpl-akt':['Шапка акта','Перечень работ','Стоимость','Претензий нет','Реквизиты и подписи'],
+ 'tpl-kp':['Шапка','Сводка','Задача','Этапы','График','Опыт','Формат работы'],
+ 'tpl-brief':['О компании','Задача','Аудитория','Конкуренты','Референсы','Сроки и бюджет'],
+ 'tpl-tz':['Цель','Страницы','Функции','Контент','Сроки'],
+ 'tpl-handoff':['Ссылки на макеты','Сетка и брейкпоинты','Стили и токены','Состояния элементов','Анимации','Экспорт ассетов']
+};
+const BT = {
+ 'Шапка и стороны':v=>`<p style="text-align:center"><b>ДОГОВОР № ${v('Номер')}</b></p><p>${v('Город')}, ${v('Дата')}</p><p>${v('Клиент')}, далее «Заказчик», и Исполнитель заключили договор о нижеследующем.</p>`,
+ 'Шапка акта':v=>`<p style="text-align:center"><b>АКТ СДАЧИ-ПРИЁМКИ к договору № ${v('Номер')}</b></p><p>${v('Город')}, ${v('Дата')}</p>`,
+ 'Предмет договора':v=>`<p>Исполнитель выполняет работы: ${v('Что делаем')}.</p>`,
+ 'Перечень работ':v=>`<p>Выполнены работы: ${v('Что делаем')}.</p>`,
+ 'Сроки':v=>`<p>Срок выполнения — ${v('Срок')} с даты поступления предоплаты.</p>`,
+ 'Стоимость и порядок оплаты':v=>`<p>Стоимость работ — ${v('Сумма')}. Порядок оплаты — ${v('Схема оплаты')}.</p>`,
+ 'Стоимость':v=>`<p>Стоимость выполненных работ — ${v('Сумма')}.</p>`,
+ 'Права и исходники':()=>`<p>Права на результат и исходные файлы передаются Заказчику после полной оплаты и подписания акта.</p>`,
+ 'Реквизиты и подписи':v=>`<p>Заказчик: ${v('Клиент')} — реквизиты из карточки клиента.</p><p>Исполнитель — реквизиты из профиля.</p>`
+};
+const DFIELDS=['Номер','Город','Дата','Клиент','Что делаем','Срок','Сумма','Схема оплаты'];
+const docs = [
+ {id:'d1',pid:'nordline',tpl:'tpl-dog-ui',t:'Договор — Nordline',st:'Подписан',ver:2,date:'25.09'},
+ {id:'d2',pid:'nordline',tpl:'tpl-akt',t:'Акт — Nordline',st:'Черновик',ver:1,date:'15.10'},
+ {id:'d3',pid:'agroservis',tpl:'tpl-kp',t:'КП — АгроСервис',st:'Черновик',ver:1,date:'01.10'}
+];
+
+/* ---------- КП (цены и сроки вводит пользователь — Claude их не предлагает) ---------- */
+const kps = {
+ 'agroservis':{status:'draft',what:'Редизайн сайта agroservis.su на Tilda под ключ',pages:'',date:'01.10',until:'',start:'',task:'',pay:'50/50',
+  stages:['Аналитика: бриф, конкуренты, гипотезы','Структура сайта','Дизайн-концепт главной','Внутренние страницы и адаптив','Вёрстка на Tilda','Проверка и запуск'].map(n=>({n,desc:'',res:'',days:'',price:''})),
+  cases:['','',''],hist:[['v1','01.10','Черновик']]}
+};
+const KPST={draft:'Черновик',sent:'Отправлено',accepted:'Принято',rejected:'Отклонено'};
+
+/* ---------- Доска решений ---------- */
+const BSTAGES=[['refs','Референсы'],['struct','Структура'],['wire','Вайрфреймы'],['visual','Визуал'],['proto','Прототип']];
+const boards = {
+ 'nordline':{
+  refs:[{id:'r1',title:'Референсы: «О бренде» и карточка товара',lead:'Claude разобрал референсы проекта. По каждому — берём, адаптируем или мимо',kind:'refs',items:[
+    {name:'Beanro',what:'Как собран блок «О бренде»',v:'',note:''},
+    {name:'Stone Sip',what:'Что берём — Claude пишет после разбора',v:'',note:''},
+    {name:'Kreme',what:'Что берём — Claude пишет после разбора',v:'',note:''}],ok:'',fix:''}],
+  wire:[
+   {id:'w1',title:'Главная — первый экран',lead:'Два варианта из правок клиента. Выбери один, отметь блоки',kind:'variants',variants:[['A','Слева белое с лого, справа красное с пачками (28.09)'],['B','Логотип со змеёй красным вместо заголовка, одна кнопка']],pick:'',items:[
+     {name:'Desktop 1440',what:'',v:'',note:''},{name:'Mobile 375',what:'',v:'',note:''}],ok:'',fix:''},
+   {id:'w2',title:'Карточка товара c48',lead:'Все состояния вкладок на одной странице',kind:'screens',items:[
+     {name:'Вкладка «Оборот»',what:'',v:'',note:''},{name:'Вкладка «Документы»',what:'Декларация ЕАЭС',v:'',note:''},{name:'Вкладка «Состав»',what:'',v:'',note:''}],ok:'',fix:''}],
+  visual:[{id:'v1',title:'c48 — пересборка 03.10',lead:'Было / стало и что изменилось',kind:'ba',before:'c48 до 03.10',after:'c48 после 03.10',why:'Страница товара пересобрана 03.10 — Claude описывает, что изменилось и почему',ok:'',fix:''}]
+ }
+};
+const VERD={refs:[['take','Берём'],['adapt','Адаптируем'],['skip','Мимо']],screens:[['good','Хорошо'],['remove','Убрать'],['fix','Поправить']]};
+const TASTE=['Асимметрия и смещённый заголовок, а не центр','Видимая или жёсткая сетка','Одна гарнитура + мелкий служебный слой','Цвет: одно пятно, дозированно','Двухтоновый заголовок','Фирменная метка из логотипа как сквозной маркер','Движение через закрепление','Hero — медиа во весь экран или ровно пополам','Цифры — лесенкой','Ритм: длинное закреплённое чередуется с коротким плотным'];
+
+/* ---------- Клиенты и деньги (демо) ---------- */
+const clients = projects.filter(p=>p.id!=='knowledge-base').map(p=>({name:p.client,pid:p.id}));
+const payments = [
+ {pid:'nordline',t:'Предоплата 50%',due:'25.09',paid:true},
+ {pid:'nordline',t:'Остаток 50% — после акта',due:'15.10',paid:false},
+ {pid:'agroservis',t:'Предоплата — после принятия КП',due:'—',paid:false}
+];
+
+/* ---------- Состояние ---------- */
+const S = {view:'dash', pid:null, ptab:'overview', pfilter:'all', pmode:'list', kbid:'p-success', kbedit:false, refFilter:'all', openRounds:{3:true}, todayDone:{},
+  wk:0, planEdit:false, bstage:'wire', cv:{}, docid:null, doctab:'docs', docv:{}, docblocks:{}, dochtml:{}, docedit:false, mtab:'clients', taste:{}};
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const P = id=>projects.find(p=>p.id===id);
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),3200)}
+function stLabel(s){return ST[s].i+' '+ST[s].t}
+function curStep(p){return p.steps.find(s=>s.st==='work')||p.steps.find(s=>s.st==='art')||p.steps.find(s=>s.st==='none')}
+function openEdits(p){let n=0;p.rounds.forEach(r=>r.rows.forEach(x=>{if(['new','work','wait'].includes(x[2]))n++}));return n}
+function roundOpen(r){return r.rows.filter(x=>['new','work','wait'].includes(x[2])).length}
+function active(){return projects.filter(p=>p.status!=='done')}
+
+function todayTasks(){
+  const t=[];
+  active().forEach(p=>{
+    p.rounds.forEach(r=>r.rows.forEach((x,i)=>{if(['new','work'].includes(x[2]))t.push({id:`e-${p.id}-${r.n}-${i}`,text:`${x[0]}: ${x[1]}`,proj:p,go:()=>go('project',p.id,'edits')})}));
+    p.steps.filter(s=>s.st==='work').forEach(s=>t.push({id:`s-${p.id}-${s.n}`,text:`Продолжить: ${s.name}`,proj:p,go:()=>go('project',p.id)}));
+    p.steps.filter(s=>s.st==='art').forEach(s=>t.push({id:`a-${p.id}-${s.n}`,text:`Решить: ${s.name}${s.note?' — '+s.note:''}`,proj:p,go:()=>go('project',p.id)}));
+  });
+  tasks.forEach(x=>{const p=P(x.pid);if(!p||p.status==='done'||F(effDate(x))!==TODAY_S)return;
+    S.todayDone['t-'+x.id]=x.done;
+    t.push({id:'t-'+x.id,text:x.text,proj:p,moved:!x.done&&D(x.date)<TODAY?x.moved:0,from:x.date,go:()=>go('project',p.id,'plan')})});
+  return t;
+}
+const movedBadge=t=>t.moved?`<span class="badge hot" title="План был на ${t.from}">перенесено ${t.moved} раз · с ${t.from}</span>`:'';
+function dayTasks(d){return tasks.filter(x=>P(x.pid)?.status!=='done'&&F(effDate(x))===F(d))}
+function waitingOthers(){
+  const t=[];
+  active().forEach(p=>{
+    p.questions.forEach(q=>t.push({text:q[1],who:q[0],proj:p}));
+    p.steps.filter(s=>s.st==='block').forEach(s=>t.push({text:`Шаг «${s.name}» заблокирован`,who:'см. паспорт',proj:p}));
+  });
+  return t;
+}
+function needDecision(){const t=[];active().forEach(p=>p.steps.filter(s=>s.st==='art').forEach(s=>t.push({s,p})));return t}
+
+/* ---------- Роутер ---------- */
+function go(view,id,tab){S.view=view;S.planEdit=false;S.docedit=false;if(view==='project'){S.pid=id;S.ptab=tab||'overview'}if(view==='kb'&&id)S.kbid=id;if(view==='doc')S.docid=id;render();$('main').scrollTop=0}
+function counts(){
+  $('#c-inbox').textContent=inbox.length||'';
+  $('#c-proj').textContent=active().length;
+  $('#c-today').textContent=todayTasks().filter(t=>!S.todayDone[t.id]).length;
+  const over=weekDays(0).filter(d=>isWork(d)&&dayTasks(d).filter(x=>!x.done).length>=OVER).length;
+  $('#c-cal').textContent=over?'перегруз':'';
+}
+function render(){
+  document.querySelectorAll('.sbtn[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===S.view||(S.view==='project'&&b.dataset.go==='projects')||(S.view==='doc'&&b.dataset.go==='docsall')));
+  const v={dash,today,cal:calV,inbox:inboxV,projects:projectsV,project:projectV,kb:kbV,refs:refsV,docsall:docsV,doc:docV,money:moneyV}[S.view];
+  $('#view').innerHTML=v();bind();counts();
+  if(S.view==='project'&&S.ptab==='canvas')cvMount();
+}
+
+/* ---------- Экраны ---------- */
+function widget(cls,title,n,go,body){return `<section class="card w ${cls}"><div class="wh" data-nav="${go}"><h2>${title}</h2><span class="n">${n}</span><span class="go">→</span></div>${body}</section>`}
+function dash(){
+  const tt=todayTasks().filter(t=>!S.todayDone[t.id]);
+  const nd=needDecision(), wo=waitingOthers();
+  const ed=active().filter(p=>openEdits(p));
+  const wk=weekDays(0).filter(isWork), late=active().filter(p=>planCalc(p.id)?.lag);
+  const pend=payments.filter(x=>!x.paid);
+  return `<div class="head"><div class="grow"><h1>Дашборд</h1><p class="sub">Среда, 7 октября</p></div><button class="btn pri" data-new>Создать</button></div>
+  <div class="grid">
+   ${widget('c8','Дела на сегодня',tt.length,'today',`<div class="list">${tt.slice(0,6).map(t=>`<div class="li" data-task="${t.id}"><span class="chk" data-done="${t.id}"></span><span class="t">${esc(t.text)}</span>${movedBadge(t)}<span class="m">${esc(t.proj.name)}</span></div>`).join('')||'<div class="empty">Всё сделано</div>'}${tt.length>6?`<div class="empty">и ещё ${tt.length-6}</div>`:''}</div>`)}
+   ${widget('c4','Входящие',inbox.length,'inbox',`<div class="list">${inbox.slice(0,4).map(i=>`<div class="li" data-nav="inbox"><span class="t">${esc(i.text)}</span><span class="m">${i.kind}</span></div>`).join('')||'<div class="empty">Пусто</div>'}</div>`)}
+   ${widget('c6','Проекты в работе',active().length,'projects',`<div class="list">${active().slice(0,6).map(p=>{const c=curStep(p);return `<div class="li" data-proj="${p.id}"><span class="t">${esc(p.name)}</span><span class="st">${c?ST[c.st].i+' '+esc(c.name):'—'}</span></div>`}).join('')}</div>`)}
+   ${widget('c6','Открытые правки',ed.reduce((a,p)=>a+openEdits(p),0),'projects',`<div class="list">${ed.map(p=>{const r=p.rounds.find(r=>roundOpen(r));return `<div class="li" data-proj="${p.id}" data-tab="edits"><span class="t">${esc(p.name)} · раунд ${r.n}</span><span class="m">${openEdits(p)} открыто из ${r.rows.length}</span><span class="prog"><i style="width:${Math.round((r.rows.length-roundOpen(r))/r.rows.length*100)}%"></i></span></div>`}).join('')||'<div class="empty">Нет открытых правок</div>'}</div>`)}
+   ${widget('c4','Ждут моего решения',nd.length,'projects',`<div class="list">${nd.map(x=>`<div class="li" data-proj="${x.p.id}"><span class="t">🎨 ${esc(x.s.name)}</span><span class="m">${esc(x.p.name)}</span></div>`).join('')||'<div class="empty">Ничего</div>'}</div>`)}
+   ${widget('c4','Ждём от других',wo.length,'projects',`<div class="list">${wo.map(x=>`<div class="li" data-proj="${x.proj.id}"><span class="t">${esc(x.text)}</span><span class="m">${esc(x.proj.name)}</span></div>`).join('')||'<div class="empty">Ничего</div>'}</div>`)}
+   ${widget('c4','Последние уроки',kb[3].items.length,'kb',`<div class="list">${kb[3].items.map(l=>`<div class="li" data-kb="${l.id}"><span class="t">${esc(l.t)}</span><span class="m">${l.meta[0]}</span></div>`).join('')}</div>`)}
+   ${widget('c6','Неделя',wk.reduce((a,d)=>a+dayTasks(d).filter(x=>!x.done).length,0),'cal',`<div class="list">${wk.map(d=>{const n=dayTasks(d).filter(x=>!x.done).length;return `<div class="li" data-nav="cal"><span class="t">${WD[d.getDay()]}, ${F(d)}${F(d)===TODAY_S?' · сегодня':''}</span>${n>=OVER?'<span class="badge hot">перегруз</span>':''}<span class="m">${n} задач</span></div>`}).join('')}${late.map(p=>`<div class="li" data-proj="${p.id}" data-tab="plan"><span class="t">Отставание: ${esc(p.name)}</span><span class="badge hot">${esc(planCalc(p.id).st.filter(s=>s.lag).map(s=>s.name+' +'+s.lag+' дн.').join(', '))}</span></div>`).join('')}</div>`)}
+   ${widget('c6','Деньги',pend.length,'money',`<div class="list">${pend.map(x=>`<div class="li" data-nav="money"><span class="t">${esc(x.t)}</span><span class="m">${esc(P(x.pid).name)} · ${x.due}</span></div>`).join('')}${Object.entries(kps).map(([pid,k])=>`<div class="li" data-proj="${pid}" data-tab="kp"><span class="t">КП · ${esc(P(pid).name)}</span><span class="m">${KPST[k.status]}</span></div>`).join('')}</div>`)}
+  </div>`;
+}
+function today(){
+  const tt=todayTasks();
+  const by={};tt.forEach(t=>(by[t.proj.id]??=[]).push(t));
+  return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / Дела на сегодня</div>
+  <div class="head"><div class="grow"><h1>Дела на сегодня</h1><p class="sub">Собраны сами: задачи из планов на сегодня, просроченные (перенесены сами), правки в работе, шаги «в работе» и решения, которые ждут тебя</p></div><button class="btn" data-nav="cal">Календарь недели</button></div>
+  ${Object.values(by).map(list=>`<section class="card sec"><div class="wh" style="display:flex;gap:8px;margin-bottom:6px"><h2 style="cursor:pointer" data-proj="${list[0].proj.id}">${esc(list[0].proj.name)}</h2><span class="m" style="color:var(--faint);font-size:13px">${TYPES[list[0].proj.type]}</span></div><div class="list">${list.map(t=>`<div class="li ${S.todayDone[t.id]?'done':''}" data-task="${t.id}"><span class="chk ${S.todayDone[t.id]?'on':''}" data-done="${t.id}">${S.todayDone[t.id]?'✓':''}</span><span class="t">${esc(t.text)}</span>${S.todayDone[t.id]?'':movedBadge(t)}</div>`).join('')}</div></section>`).join('')}`;
+}
+function inboxV(){
+  const opts=['',...projects.map(p=>p.id)];
+  return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / Входящие</div>
+  <div class="head"><div class="grow"><h1>Входящие</h1><p class="sub">Всё новое падает сюда. Разбери: к какому проекту и что это</p></div><button class="btn pri" data-new>Создать</button></div>
+  <section class="card">${inbox.map(i=>`<div class="inb"><span class="ico">${i.kind[0]}</span><div class="t"><div>${esc(i.text)}</div><div>${i.meta}</div></div>
+   <select data-iproj="${i.id}">${opts.map(o=>`<option value="${o}" ${o===i.proj?'selected':''}>${o?esc(P(o).name):'Без проекта'}</option>`).join('')}</select>
+   <select data-itype="${i.id}">${['Референс','Правка','Задача','Заметка','Созвон'].map(o=>`<option ${o===i.type?'selected':''}>${o}</option>`).join('')}</select>
+   <button class="btn" data-sort="${i.id}">Разобрать</button></div>`).join('')||'<div class="stub">Входящие пусты</div>'}</section>`;
+}
+function projectsV(){
+  const f=S.pfilter;
+  const list=projects.filter(p=>f==='all'||(f in TYPES?p.type===f:p.status===f));
+  const flt=[['all','Все'],['work','В работе'],['wait','Ждём клиента'],['done','Сданы и архив'],['figma','Figma'],['tilda','Tilda'],['presale','Пресейл']];
+  const qlinks=p=>{const L=Object.fromEntries(p.links);return [['Макет',L['Figma']],['Референсы',L['Референсы']],['Сайт',L['Сайт']||L['Концепт онлайн']]]};
+  const body = S.pmode==='gallery'
+   ? `<div class="note-proto">Галерея по образцу твоей Figma-таблицы проектов: превью, ссылка на макет, референсы, готовый сайт. Сюда же — архив старых проектов (около 50) импортом из той таблицы.</div><div class="refs">${list.map(p=>`<div class="card ref pcard" data-proj="${p.id}" style="cursor:pointer"><div class="shot">превью</div><div class="b" style="flex-direction:column;align-items:stretch;gap:8px"><div class="t"><div>${esc(p.name)}</div><div>${TYPES[p.type]} · ${PSTATUS[p.status]}</div></div><div style="display:flex;gap:6px">${qlinks(p).map(([t,u])=>`<button class="btn ql" style="font-size:12px;padding:3px 8px" ${u?`title="${esc(u)}"`:'disabled'} data-ql="${esc(t)}">${t}</button>`).join('')}</div></div></div>`).join('')}</div>`
+   : S.pmode==='list'
+   ? `<section class="card"><table><tr><th>Проект</th><th>Тип</th><th>Текущий шаг</th><th>Готово шагов</th><th>Правки</th><th>План</th><th>Старт</th></tr>
+     ${list.map(p=>{const c=curStep(p),d=p.steps.filter(s=>s.st==='done').length;return `<tr class="row" data-proj="${p.id}"><td><b style="font-weight:550">${esc(p.name)}</b><div style="font-size:12px;color:var(--faint)">${esc(p.client)}</div></td><td class="st">${TYPES[p.type]}</td><td class="st">${c?stLabel(c.st)+' · '+esc(c.name):'—'}</td><td><div style="display:flex;gap:8px;align-items:center"><span class="prog" style="flex:1"><i style="width:${Math.round(d/p.steps.length*100)}%"></i></span><span class="st">${d}/${p.steps.length}</span></div></td><td class="st">${openEdits(p)||'—'}</td><td class="st">${(()=>{const c=planCalc(p.id);return c?(c.lag?`<span class="badge hot">+${c.lag} дн.</span>`:'по плану'):'—'})()}</td><td class="st">${p.start}</td></tr>`}).join('')}</table></section>`
+   : `<div class="board">${Object.entries(PSTATUS).map(([k,t])=>`<div class="col"><h3>${t} · ${list.filter(p=>p.status===k).length}</h3>${list.filter(p=>p.status===k).map(p=>{const c=curStep(p);return `<div class="card pc" data-proj="${p.id}"><div>${esc(p.name)}</div><div class="k">${TYPES[p.type]} · ${c?ST[c.st].i+' '+esc(c.name):'—'}</div></div>`}).join('')}</div>`).join('')}</div>`;
+  return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / Проекты</div>
+  <div class="head"><div class="grow"><h1>Проекты</h1><p class="sub">${active().length} в работе · данные из паспортов projects/*/PROJECT.md</p></div>
+   ${[['list','Список'],['board','Доска'],['gallery','Галерея']].map(([k,t])=>`<button class="fbtn ${S.pmode===k?'on':''}" data-pmode="${k}">${t}</button>`).join('')}<button class="btn pri" data-newproj>Новый проект</button></div>
+  <div class="filters">${flt.map(([k,t])=>`<button class="fbtn ${f===k?'on':''}" data-pf="${k}">${t}</button>`).join('')}</div>${body}`;
+}
+function projectV(){
+  const p=P(S.pid);
+  const bcount=boards[p.id]?Object.values(boards[p.id]).flat().length:'';
+  const tabs=[['overview','Паспорт',''],['canvas','Холст',''],['board','Доска решений',bcount],['plan','План',planCalc(p.id)?.lag?'+'+planCalc(p.id).lag+' дн.':''],['edits','Правки',openEdits(p)||''],['docs','Документы',docs.filter(d=>d.pid===p.id).length||''],['kp','КП',kps[p.id]?KPST[kps[p.id].status]:''],['calls','Созвоны',''],['files','Файлы','']];
+  const body={overview:passportV,canvas:canvasV,board:boardV,plan:planV,edits:editsV,docs:pdocsV,kp:kpV,calls:callsV,files:filesV}[S.ptab](p);
+  return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / <a data-nav="projects">Проекты</a> / ${esc(p.name)}</div>
+  <div class="head"><div class="grow"><h1>${esc(p.name)}</h1><p class="sub">${esc(p.what)}</p></div>
+   <button class="btn" data-pdf="Паспорт ${esc(p.name)}">PDF</button>
+   <select data-pstatus style="width:auto">${Object.entries(PSTATUS).map(([k,t])=>`<option value="${k}" ${k===p.status?'selected':''}>${t}</option>`).join('')}</select></div>
+  <div class="tabs" style="overflow-x:auto">${tabs.map(([k,t,n])=>`<button class="tab ${S.ptab===k?'on':''}" data-ptab="${k}">${t}${n!==''?`<span class="n">${n}</span>`:''}</button>`).join('')}</div>${body}`;
+}
+
+/* --- Паспорт: страница с секциями, как документация дизайн-системы --- */
+function passportV(p){
+  const pc=planCalc(p.id), cur=curStep(p), done=p.steps.filter(s=>s.st==='done').length;
+  const secs=[['passport','Паспорт'],['pipeline','Пайплайн'],['decisions','Решения'],['questions','Открытые вопросы'],['links','Ссылки'],['related','Связанное']];
+  const sec=(i,id,title,lead,html)=>`<section class="dsec" id="ds-${id}"><div class="eb">${String(i+1).padStart(2,'0')} / ${title.toUpperCase()}</div><h2>${title}</h2>${lead?`<p class="lead">${lead}</p>`:''}${html}</section>`;
+  return `<div class="doc"><nav class="doc-nav">${secs.map(([id,t],i)=>`<a data-anchor="ds-${id}"><span>${String(i+1).padStart(2,'0')}</span>${t}</a>`).join('')}</nav><div>
+  ${sec(0,'passport','Паспорт','Кто клиент, что делаем и где проект сейчас.',`<div class="spec">
+    <span>Клиент</span><span>${esc(p.client)}</span><span>Что делаем</span><span>${esc(p.what)}</span><span>Тип</span><span>${TYPES[p.type]}</span>
+    <span>Статус</span><span>${PSTATUS[p.status]}</span><span>Текущий шаг</span><span>${cur?stLabel(cur.st)+' · '+esc(cur.name):'—'}</span>
+    <span>Готово шагов</span><span>${done} из ${p.steps.length}</span><span>Старт</span><span>${p.start}</span><span>Срок</span><span>${esc(p.deadline)}</span>
+    <span>План</span><span>${pc?`сдача по плану ${F(pc.endPlan)}${pc.lag?` → с отставанием ${F(pc.endFact)} <span class="badge hot">+${pc.lag} дн.</span>`:''}`:'не задан'}</span></div>`)}
+  ${sec(1,'pipeline','Пайплайн',`Шаги ${p.type==='tilda'?'Tilda-проекта':p.type==='app'?'своего проекта':'Figma-проекта'}. Сменишь статус шага — всё ниже, что было готово или в работе, станет ⚠️ Устарело.`,`<div class="card" style="padding:6px 14px"><div class="pipe">${p.steps.map((s,i)=>`<div class="step" id="step-${i}"><span class="num">${s.n}</span><span class="nm">${esc(s.name)}${s.note?`<span class="note" title="${esc(s.note)}">${esc(s.note)}</span>`:''}</span>
+       <select data-step="${i}">${Object.entries(ST).map(([k,v])=>`<option value="${k}" ${k===s.st?'selected':''}>${v.i} ${v.t}</option>`).join('')}</select></div>`).join('')}</div></div>`)}
+  ${sec(2,'decisions','Решения','Не переигрывать без обсуждения. Сюда же падают решения, принятые на доске.',`<div class="card" style="padding:4px 14px">${p.decisions.map(d=>`<div class="dec"><b>${d[0]}</b>${esc(d[1])}</div>`).join('')||'<div class="empty">Пока нет</div>'}</div>`)}
+  ${sec(3,'questions','Открытые вопросы','Кому, что и что блокирует.',`<div class="card" style="padding:4px 14px">${p.questions.map(q=>`<div class="dec"><b>${q[0]}</b>${esc(q[1])}<div style="font-size:12px;color:var(--faint)">блокирует: ${esc(q[2])}</div></div>`).join('')||'<div class="empty">Нет</div>'}</div>`)}
+  ${sec(4,'links','Ссылки','',`<div class="tiles">${p.links.map(l=>`<div class="card tile" data-toast="Открыть: ${esc(l[0])} → ${esc(l[1])}"><span class="k">${esc(l[0])}</span><span>${esc(l[1])}</span></div>`).join('')}</div>`)}
+  ${sec(5,'related','Связанное','Остальные виды проекта.',`<div class="tiles">${[['canvas','Холст','окна проекта и связи'],['board','Доска решений',(bcountOf(p)||'нет')+' узлов'],['plan','План',pc?(pc.lag?'+'+pc.lag+' дн.':'по плану'):'не задан'],['edits','Правки',openEdits(p)+' открыто'],['docs','Документы',docs.filter(d=>d.pid===p.id).length+' шт.'],['kp','КП',kps[p.id]?KPST[kps[p.id].status]:'нет']].map(([k,t,m])=>`<div class="card tile" data-ptab="${k}"><span>${t}</span><span class="k">${m}</span></div>`).join('')}</div>`)}
+  </div></div>`;
+}
+const bcountOf=p=>boards[p.id]?Object.values(boards[p.id]).flat().length:0;
+
+/* --- Холст --- */
+function cvDefault(p){
+  const nodes=[],edges=[];
+  nodes.push({id:'passport',type:'hub',k:'Паспорт',t:p.name,b:p.what,x:40,y:60,go:'overview'});
+  const st=p.steps.filter(s=>s.st!=='skip');
+  st.forEach((s,i)=>{const row=Math.floor(i/4),c=i%4,col=row%2?3-c:c;
+    nodes.push({id:'s'+i,type:'step',k:'Шаг '+s.n,t:s.name,b:ST[s.st].i+' '+ST[s.st].t+(s.note?' · '+s.note:''),x:330+col*260,y:40+row*190,go:'overview'});
+    edges.push([i?'s'+(i-1):'passport','s'+i]);});
+  const ci=st.findIndex(s=>s.name==='Концепт'), di=st.findIndex(s=>s.name.startsWith('Дизайн-система'));
+  const refL=p.links.find(l=>l[0]==='Референсы');
+  let y=40+Math.ceil(st.length/4)*190+30;
+  if(refL)refL[1].split(',').map(x=>x.trim()).forEach((r,i)=>{nodes.push({id:'ref'+i,type:'ref',k:'Референс',t:r,img:'скриншот',x:330+i*230,y});edges.push(['ref'+i,'s'+(di>=0?di:0)])});
+  if(p.rounds.length){const r=p.rounds[0];nodes.push({id:'edits',type:'edit',k:'Правки',t:'Раунд '+r.n+' · '+r.date,b:(r.rows.length-roundOpen(r))+' из '+r.rows.length+' закрыто',x:40,y:300,go:'edits'});if(ci>=0)edges.push(['s'+ci,'edits'])}
+  if(boards[p.id]){nodes.push({id:'board',type:'edit',k:'Доска',t:'Доска решений',b:bcountOf(p)+' узлов ждут пометок',x:40,y:460,go:'board'});if(ci>=0)edges.push(['board','s'+ci])}
+  return {nodes,edges,tx:0,ty:0,z:1,sel:null,linking:false,linkFrom:null,filter:'all',fitted:false};
+}
+const cvState=p=>S.cv[p.id]??=cvDefault(p);
+const CVF=[['all','Все'],['step','Шаги'],['ref','Референсы'],['edit','Правки и доски']];
+const cvVis=(c,n)=>c.filter==='all'||n.type===c.filter||(c.filter==='step'&&n.type==='hub');
+function canvasV(p){
+  const c=cvState(p);
+  return `<div class="note-proto">Раскладка — руками: двигаешь окна, тянешь связи, кидаешь картинки прямо из проводника (сохраняется в canvas.json проекта). Содержимое окон меняет Claude через чат. Двойной клик — открыть окно целиком, Delete — убрать выбранное.</div>
+  <div class="card cv" id="cv">
+   <div class="cv-tools"><button class="btn" data-cv="add">+ Окно</button><button class="btn" data-cv="ref">+ Референс</button><button class="btn ${c.linking?'pri':''}" data-cv="link">${c.linking?'Выбери два окна…':'Связать'}</button>
+    <span style="flex:1"></span>${CVF.map(([k,t])=>`<button class="fbtn ${c.filter===k?'on':''}" data-cvf="${k}">${t}</button>`).join('')}</div>
+   <div class="cv-in" id="cv-in"><svg id="cv-svg" width="1" height="1"></svg>
+    ${c.nodes.map(n=>`<div class="nd t-${n.type} ${c.sel===n.id?'sel':''}" data-nd="${n.id}" style="left:${n.x}px;top:${n.y}px;${cvVis(c,n)?'':'display:none'}"><div class="nh">${esc(n.t)}<span class="k">${esc(n.k)}</span></div>${n.img?`<div class="img">${n.img.startsWith('data:')?`<img src="${n.img}" alt="">`:esc(n.img)}</div>`:''}${n.b?`<div class="nb" ${n.img?'style="padding-top:8px"':''}>${esc(n.b)}</div>`:''}</div>`).join('')}</div>
+   <div class="cv-zoom"><button class="btn" data-cv="zout">−</button><span id="cv-z">100%</span><button class="btn" data-cv="zin">+</button><button class="btn" data-cv="fit">Вписать</button></div>
+   <div class="mini" id="mini"></div>
+  </div>`;
+}
+function cvApply(){const c=cvState(P(S.pid)),inn=$('#cv-in');if(!inn)return;inn.style.transform=`translate(${c.tx}px,${c.ty}px) scale(${c.z})`;$('#cv-z').textContent=Math.round(c.z*100)+'%';cvMini()}
+function cvBox(c,id){const el=document.querySelector(`[data-nd="${id}"]`),n=c.nodes.find(n=>n.id===id);if(!el||!n||el.style.display==='none')return null;return {x:n.x,y:n.y,w:el.offsetWidth,h:el.offsetHeight}}
+function cvEdges(){
+  const c=cvState(P(S.pid)),svg=$('#cv-svg');if(!svg)return;
+  svg.innerHTML=c.edges.map(([a,b])=>{const A=cvBox(c,a),B=cvBox(c,b);if(!A||!B)return '';
+    const ax=A.x+A.w/2,ay=A.y+A.h/2,bx=B.x+B.w/2,by=B.y+B.h/2;let x1,y1,x2,y2,d;
+    if(Math.abs(bx-ax)>Math.abs(by-ay)){x1=bx>ax?A.x+A.w:A.x;x2=bx>ax?B.x:B.x+B.w;y1=ay;y2=by;const k=(x2-x1)/2;d=`M${x1} ${y1}C${x1+k} ${y1},${x2-k} ${y2},${x2} ${y2}`}
+    else{y1=by>ay?A.y+A.h:A.y;y2=by>ay?B.y:B.y+B.h;x1=ax;x2=bx;const k=(y2-y1)/2;d=`M${x1} ${y1}C${x1} ${y1+k},${x2} ${y2-k},${x2} ${y2}`}
+    return `<path d="${d}" style="fill:none;stroke:var(--line2);stroke-width:1.5"/><circle cx="${x2}" cy="${y2}" r="3.5" style="fill:var(--muted)"/>`}).join('');
+}
+function cvBounds(c){const el=$('#cv');let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;c.nodes.filter(n=>cvVis(c,n)).forEach(n=>{const b=cvBox(c,n.id)||{x:n.x,y:n.y,w:220,h:100};x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.w);y1=Math.max(y1,b.y+b.h)});return x0>x1?null:{x0,y0,x1,y1,el}}
+function cvFit(){const c=cvState(P(S.pid)),b=cvBounds(c);if(!b)return;const W=b.el.clientWidth,H=b.el.clientHeight,pad=60;
+  c.z=Math.min(1.2,Math.max(.3,Math.min((W-pad*2)/(b.x1-b.x0),(H-pad*2-40)/(b.y1-b.y0))));c.tx=(W-(b.x1-b.x0)*c.z)/2-b.x0*c.z;c.ty=(H-(b.y1-b.y0)*c.z)/2-b.y0*c.z+16;cvApply()}
+function cvMini(){
+  const m=$('#mini'),c=cvState(P(S.pid)),b=cvBounds(c);if(!m||!b)return;
+  const W=b.el.clientWidth,H=b.el.clientHeight,vx=-c.tx/c.z,vy=-c.ty/c.z,vw=W/c.z,vh=H/c.z;
+  const x0=Math.min(b.x0,vx),y0=Math.min(b.y0,vy),x1=Math.max(b.x1,vx+vw),y1=Math.max(b.y1,vy+vh);
+  const k=Math.min(172/(x1-x0),104/(y1-y0)),r=(x,y,w,h)=>`left:${4+(x-x0)*k}px;top:${4+(y-y0)*k}px;width:${w*k}px;height:${h*k}px`;
+  m.innerHTML=c.nodes.filter(n=>cvVis(c,n)).map(n=>{const bb=cvBox(c,n.id);return bb?`<i style="${r(bb.x,bb.y,bb.w,bb.h)}"></i>`:''}).join('')+`<b style="${r(vx,vy,vw,vh)}"></b>`;
+}
+function cvMount(){
+  const el=$('#cv'),c=cvState(P(S.pid));
+  cvEdges();if(!c.fitted){c.fitted=true;cvFit()}else cvApply();
+  el.onpointerdown=e=>{
+    if(e.target.closest('.cv-tools,.cv-zoom,.mini'))return;
+    const nd=e.target.closest('.nd');
+    if(nd){
+      const n=c.nodes.find(n=>n.id===nd.dataset.nd);
+      if(c.linking){if(!c.linkFrom){c.linkFrom=n.id;nd.classList.add('sel');toast('Теперь выбери второе окно')}else if(c.linkFrom!==n.id){c.edges.push([c.linkFrom,n.id]);c.linkFrom=null;c.linking=false;c.sel=null;render();toast('Связь добавлена · canvas.json')}return}
+      c.sel=n.id;el.querySelectorAll('.nd.sel').forEach(x=>x.classList.remove('sel'));nd.classList.add('sel');
+      const sx=e.clientX,sy=e.clientY,ox=n.x,oy=n.y;
+      const mv=ev=>{n.x=Math.round(ox+(ev.clientX-sx)/c.z);n.y=Math.round(oy+(ev.clientY-sy)/c.z);nd.style.left=n.x+'px';nd.style.top=n.y+'px';cvEdges();cvMini()};
+      const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up)};
+      addEventListener('pointermove',mv);addEventListener('pointerup',up);
+    } else {
+      c.sel=null;el.querySelectorAll('.nd.sel').forEach(x=>x.classList.remove('sel'));el.classList.add('pan');
+      const sx=e.clientX,sy=e.clientY,ox=c.tx,oy=c.ty;
+      const mv=ev=>{c.tx=ox+ev.clientX-sx;c.ty=oy+ev.clientY-sy;cvApply()};
+      const up=()=>{el.classList.remove('pan');removeEventListener('pointermove',mv);removeEventListener('pointerup',up)};
+      addEventListener('pointermove',mv);addEventListener('pointerup',up);
+    }
+  };
+  el.onwheel=e=>{e.preventDefault();const r=el.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,z=Math.min(2,Math.max(.3,c.z*(e.deltaY<0?1.1:1/1.1)));c.tx=mx-(mx-c.tx)*z/c.z;c.ty=my-(my-c.ty)*z/c.z;c.z=z;cvApply()};
+  el.ondblclick=e=>{const nd=e.target.closest('.nd');if(!nd)return;const n=c.nodes.find(n=>n.id===nd.dataset.nd);if(n.go){S.ptab=n.go;render()}else toast('Окно «'+n.t+'» — откроется целиком в приложении')};
+  el.ondragover=e=>e.preventDefault();
+  el.ondrop=e=>{e.preventDefault();const r=el.getBoundingClientRect(),x=Math.round((e.clientX-r.left-c.tx)/c.z),y=Math.round((e.clientY-r.top-c.ty)/c.z);
+    const f=[...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));
+    if(f){const fr=new FileReader();fr.onload=()=>{c.nodes.push({id:'n'+Date.now(),type:'ref',k:'Референс',t:f.name,img:fr.result,x,y});render();toast('Картинка на холсте · сохранена в refs/ проекта')};fr.readAsDataURL(f);return}
+    const u=e.dataTransfer.getData('text/uri-list')||e.dataTransfer.getData('text/plain');
+    if(u){c.nodes.push({id:'n'+Date.now(),type:'ref',k:'Ссылка',t:u.slice(0,40),img:'превью ссылки',x,y});render();toast('Ссылка на холсте')}};
+}
+function cvAction(a){
+  const c=cvState(P(S.pid)),el=$('#cv'),cx=Math.round((el.clientWidth/2-c.tx)/c.z-110),cy=Math.round((el.clientHeight/2-c.ty)/c.z-50);
+  if(a==='add'){c.nodes.push({id:'n'+Date.now(),type:'step',k:'Заметка',t:'Новое окно',b:'Содержимое заполнит Claude или ты',x:cx,y:cy});render()}
+  if(a==='ref'){c.nodes.push({id:'n'+Date.now(),type:'ref',k:'Референс',t:'Новый референс',img:'перетащи сюда картинку',x:cx,y:cy});render();toast('Можно просто перетащить картинку из проводника на холст')}
+  if(a==='link'){c.linking=!c.linking;c.linkFrom=null;render()}
+  if(a==='zin'||a==='zout'){const z=Math.min(2,Math.max(.3,c.z*(a==='zin'?1.2:1/1.2))),W=el.clientWidth/2,H=el.clientHeight/2;c.tx=W-(W-c.tx)*z/c.z;c.ty=H-(H-c.ty)*z/c.z;c.z=z;cvApply()}
+  if(a==='fit')cvFit();
+}
+
+/* --- Доска решений --- */
+function boardV(p){
+  const b=boards[p.id]||{},list=b[S.bstage]||[];
+  const all=Object.values(b).flat(),marked=all.filter(n=>n.ok).length;
+  const vb=(n,i,it)=>{const vs=VERD[n.kind==='refs'?'refs':'screens'];return `<div class="verd">${vs.map(([k,t])=>`<button class="${it.v===k?'on':''}" data-bv="${n.id}:${i}:${k}">${t}</button>`).join('')}</div>`};
+  const item=(n,it,i,tall)=>`<div class="card bd-item"><div class="shot ${tall?'tall':''}">${esc(n.kind==='refs'?'скриншот '+it.name:it.name)}</div><div class="b"><div class="t"><div>${esc(it.name)}</div>${it.what?`<div>${esc(it.what)}</div>`:''}</div>${vb(n,i,it)}<textarea class="in" placeholder="Пометка" data-bnote="${n.id}:${i}">${esc(it.note)}</textarea></div></div>`;
+  const node=n=>`<section class="card bd-node" id="bn-${n.id}"><div class="bh"><h2 style="font-size:18px">${esc(n.title)}</h2>${n.ok==='ok'?'<span class="badge hot">принято</span>':n.ok==='no'?'<span class="badge hot">на переделку</span>':'<span class="badge">ждёт решения</span>'}</div><p class="lead">${esc(n.lead)}</p>
+    ${n.kind==='variants'?`<div class="varsw">${n.variants.map(([k,t])=>`<button class="fbtn ${n.pick===k?'on':''}" data-bpick="${n.id}:${k}">Вариант ${k}</button>`).join('')}</div><div class="bd-grid">${n.variants.map(([k,t])=>`<div class="card bd-item" style="${n.pick&&n.pick!==k?'opacity:.45':''}"><div class="shot">Вариант ${k}</div><div class="b"><div class="t"><div>Вариант ${k}</div><div>${esc(t)}</div></div></div></div>`).join('')}</div><div class="lab" style="margin-top:18px">Состояния выбранного варианта</div><div class="bd-grid" style="margin-top:0">${n.items.map((it,i)=>item(n,it,i,true)).join('')}</div>`
+     :n.kind==='ba'?`<div class="ba"><div><div class="lab">Было</div><div class="card bd-item"><div class="shot tall">${esc(n.before)}</div></div></div><div><div class="lab">Стало</div><div class="card bd-item"><div class="shot tall">${esc(n.after)}</div></div></div></div><div class="lab" style="margin-top:16px">Что изменилось</div><p style="margin:0;color:var(--muted)">${esc(n.why)}</p>`
+     :`<div class="bd-grid">${n.items.map((it,i)=>item(n,it,i,n.kind==='screens')).join('')}</div>`}
+    <div class="bd-foot"><button class="rbtn ${n.ok==='ok'?'on':''}" data-bok="${n.id}:ok" title="Принять">✓</button><button class="rbtn ${n.ok==='no'?'on':''}" data-bok="${n.id}:no" title="Отклонить">✕</button><textarea class="in" placeholder="Что поправить" data-bfix="${n.id}">${esc(n.fix)}</textarea></div></section>`;
+  return `<div class="head" style="margin-bottom:12px"><div class="grow"><p class="sub">Claude раскладывает варианты этапа на одной странице. Ты за пару минут отмечаешь решения — Claude забирает пометки и только потом собирает. Вердикты по референсам копятся в профиль вкуса, принятое — в «Решения» паспорта.</p></div>
+   <span class="st">отмечено ${marked} из ${all.length}</span><button class="btn pri" data-bsend ${all.length?'':'disabled'}>Отдать Claude</button></div>
+  <div class="filters">${BSTAGES.map(([k,t])=>`<button class="fbtn ${S.bstage===k?'on':''}" data-bst="${k}">${t}${b[k]?.length?' · '+b[k].length:''}</button>`).join('')}</div>
+  ${list.length?list.map(node).join(''):`<div class="card stub">Для этапа «${BSTAGES.find(x=>x[0]===S.bstage)[1]}» Claude ещё не выкладывал доску.<br><br>Попроси в чате: «разложи варианты на доску».</div>`}`;
+}
+const bnode=id=>Object.values(boards[S.pid]).flat().find(n=>n.id===id);
+
+/* --- План и задачи --- */
+function planV(p){
+  const pl=plans[p.id],pc=planCalc(p.id);
+  if(!pl)return `<div class="card stub">План не задан.<br><br><button class="btn pri" data-mkplan>Собрать план из шаблона</button><div style="font-size:12px;color:var(--faint);margin-top:10px">Шаги возьмутся из пайплайна, дни по этапам ставишь ты — Claude нормы не придумывает</div></div>`;
+  const editor=`<section class="card sec"><h2>Доли этапов</h2><p class="warn" style="margin:0 0 12px">Задаёшь сам. Шаблон «${esc(pl.tpl)}» запоминает доли для следующих проектов.</p>
+    <div class="row-f" style="margin-bottom:12px"><label class="field" style="margin:0;width:140px">Старт (ДД.ММ)<input class="in" data-pstart value="${esc(pl.start)}"></label><label class="field" style="margin:0;width:160px">Срок, раб. дней<input class="in" type="number" min="1" data-ptotal value="${esc(pl.total)}"></label></div>
+    <table><tr><th>Этап</th><th style="width:140px">Рабочих дней</th></tr>${pl.stages.map((s,i)=>`<tr><td>${esc(s[0])}</td><td><input class="in" type="number" min="0" data-pd="${i}" value="${esc(s[1])}"></td></tr>`).join('')}</table>
+    <div class="rfoot"><span class="warn grow">Сумма: ${pl.stages.reduce((a,s)=>a+(+s[1]||0),0)} из ${pl.total||'?'} дн.</span><button class="btn pri" data-pdone>Готово</button></div></section>`;
+  const gantt=pc?`<section class="card sec"><div class="row-f" style="margin-bottom:12px"><h2 class="grow" style="margin:0;flex:1">График</h2><span class="st">${esc(pl.tpl)} · ${pc.sum} раб. дней · старт ${pl.start} · сдача по плану ${F(pc.endPlan)}${pc.lag?' → '+F(pc.endFact):''}</span></div>
+    <div style="overflow-x:auto"><div class="gt"><div class="gt-row"><div class="gt-name" style="color:var(--faint);font-size:12px">Этап</div><div class="gt-days" style="--n:${pc.n}">${pc.days.map((d,i)=>`<span class="${i===pc.ti?'on':''}">${WD[d.getDay()]}<br>${F(d)}</span>`).join('')}</div><div></div></div>
+    ${pc.st.map((s,i)=>`<div class="gt-row"><div class="gt-name" title="${esc(s.name)}">${i===pc.cur?'<b>':''}${esc(s.name)}${i===pc.cur?'</b>':''}</div><div class="gt-track" style="--n:${pc.n}">${s.d?`<i class="gt-plan" style="left:${s.ps/pc.n*100}%;width:${s.d/pc.n*100}%"></i><i class="gt-fact ${s.lag?'late':''}" style="left:${s.fs/pc.n*100}%;width:${(s.d+s.lag)/pc.n*100}%"></i>`:''}${pc.ti>=0?`<i class="gt-today" style="left:${(pc.ti+.5)/pc.n*100}%"></i>`:''}</div><div class="gt-lag">${s.lag?'+'+s.lag+' дн.':''}</div></div>`).join('')}</div></div>
+    <div class="legend"><span><i style="border:1.5px dashed var(--line2)"></i>план</span><span><i style="background:var(--text);opacity:.8"></i>факт</span><span><i style="background:repeating-linear-gradient(45deg,var(--text),var(--text) 4px,var(--muted) 4px,var(--muted) 8px)"></i>отставание</span><span>выходные не показаны</span></div>
+    <div class="rfoot" style="flex-wrap:wrap"><button class="btn" data-pedit>Изменить доли этапов</button><span class="grow"></span><span class="warn">⛔ Ждали клиента</span><input class="in" type="number" min="1" value="2" id="shiftN" style="width:70px"><span class="warn">дн.</span><button class="btn" data-shift>Сдвинуть план</button></div></section>`
+    :`<div class="card stub">Поставь дни по этапам — график построится сам</div>`;
+  const ts=tasks.filter(t=>t.pid===p.id),steps=[...new Set([...pl.stages.map(s=>s[0]),...ts.map(t=>t.step)])];
+  const trow=t=>{const late=!t.done&&D(t.date)<TODAY;return `<div class="li ${t.done?'done':''}"><span class="chk ${t.done?'on':''}" data-tdone="${t.id}">${t.done?'✓':''}</span><span class="t">${esc(t.text)}</span>${late?`<span class="badge hot">перенесено ${t.moved} раз · с ${t.date}</span>`:''}<span class="m">${late?TODAY_S:t.date}</span></div>`};
+  return `${S.planEdit?editor:''}${gantt}
+  <section class="card sec"><h2>Задачи по этапам</h2><p class="warn" style="margin:-4px 0 10px">Невыполненное само переносится на следующий день. Задачи на сегодня и просроченные попадают в «Дела на сегодня».</p>
+   ${steps.filter(st=>ts.some(t=>t.step===st)).map(st=>`<div class="lab" style="margin:14px 0 4px">${esc(st)}</div><div class="list">${ts.filter(t=>t.step===st).map(trow).join('')}</div>`).join('')||'<div class="empty">Задач пока нет</div>'}
+   <div class="row-f" style="margin-top:14px"><select data-tstep style="width:200px">${steps.map(s=>`<option>${esc(s)}</option>`).join('')}</select><input class="in" data-ttext placeholder="Новая задача" style="flex:1;min-width:180px"><input class="in" data-tdate value="${TODAY_S}" style="width:80px" title="ДД.ММ"><button class="btn" data-tadd>Добавить</button></div></section>`;
+}
+
+/* --- Правки --- */
+function editsV(p){
+  return p.rounds.length?p.rounds.map(r=>{const o=roundOpen(r),open=S.openRounds[r.n]??false;return `<section class="card round"><div class="rh" data-round="${r.n}"><span>${open?'▾':'▸'}</span><div class="grow"><h3>Раунд ${r.n} · ${r.date}</h3><div class="m">${esc(r.source)}</div></div>
+      <span class="m">${r.rows.length-o} из ${r.rows.length} закрыто</span><span class="prog" style="width:120px"><i style="width:${r.rows.length?Math.round((r.rows.length-o)/r.rows.length*100):0}%"></i></span><span class="st">${r.sent?'Отправлен клиенту':'В работе'}</span></div>
+      ${open?`<div class="rbody"><table><tr><th>#</th><th>Экран / блок</th><th>Правка</th><th>Статус</th></tr>${r.rows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x[0])}</td><td>${esc(x[1])}${x[3]?`<div style="font-size:12px;color:var(--faint);margin-top:2px">${esc(x[3])}</div>`:''}</td><td><select data-edit="${r.n}:${i}">${Object.entries(ED).map(([k,t])=>`<option value="${k}" ${k===x[2]?'selected':''}>${t}</option>`).join('')}</select></td></tr>`).join('')}</table>
+      <div class="rfoot">${r.sent?'<span class="warn">Раунд отправлен клиенту</span>':`<button class="btn pri" data-send="${r.n}" ${o?'disabled':''}>Отметить «отправлен клиенту»</button><span class="warn">${o?`Нельзя отправить: ${o} правки не закрыты — сделай или отметь «отклонена» с причиной`:'Все правки закрыты — можно отправлять'}</span>`}</div></div>`:''}</section>`}).join('')
+      +`<button class="btn" data-newround>Новый раунд</button>`
+     :`<div class="card stub">Правок пока нет.<br><br><button class="btn" data-newround>Новый раунд</button></div>`;
+}
+
+/* --- Документы проекта --- */
+function pdocsV(p){
+  const pages=['📋 Бриф','🔍 Анализ конкурентов','🎯 Гипотезы','Структура и текст'],my=docs.filter(d=>d.pid===p.id);
+  return `<section class="card sec"><h2>Страницы проекта</h2><div class="list">${pages.map(x=>`<div class="li"><span class="t">${x}</span><button class="btn" style="font-size:12px;padding:3px 8px" data-pdf="${esc(x)}">PDF</button><span class="m">Notion ↗ · до переезда</span></div>`).join('')}</div></section>
+  <section class="card sec"><div class="row-f" style="margin-bottom:10px"><h2 style="flex:1;margin:0">Документы</h2><select data-mkdoc style="width:auto"><option value="">+ Создать из шаблона…</option>${TPL.map(t=>`<option value="${t.id}">${esc(t.t)}</option>`).join('')}</select></div>
+   ${my.length?`<table><tr><th>Документ</th><th>Тип</th><th>Статус</th><th>Версия</th><th>Дата</th></tr>${my.map(d=>`<tr class="row" data-doc="${d.id}"><td>${esc(d.t)}</td><td class="st">${TPL.find(t=>t.id===d.tpl).k}</td><td class="st">${d.st}</td><td class="st">v${d.ver}</td><td class="st">${d.date}</td></tr>`).join('')}</table>`:'<div class="empty">Документов пока нет</div>'}</section>`;
+}
+
+/* --- КП --- */
+const num=v=>{const n=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));return isNaN(n)?0:n};
+const money=n=>n?n.toLocaleString('ru-RU')+' ₽':'—';
+function kpV(p){
+  const k=kps[p.id];
+  if(!k)return `<div class="card stub">КП для этого проекта нет.<br><br><button class="btn pri" data-mkkp>Собрать КП из шаблона</button></div>`;
+  const days=k.stages.reduce((a,s)=>a+num(s.days),0),sum=k.stages.reduce((a,s)=>a+num(s.price),0);
+  const left=okDate(k.until)?Math.ceil((D(k.until)-TODAY)/864e5):null;
+  let gi=0;const gd=okDate(k.start)&&days?workDays(D(k.start),days):null;
+  const cases=projects.filter(x=>x.id!==p.id&&x.id!=='knowledge-base');
+  const f=(key,ph,w)=>`<input class="in" data-kpf="${key}" value="${esc(k[key])}" placeholder="${ph}" ${w?`style="width:${w}"`:''}>`;
+  return `<div class="head" style="margin-bottom:16px"><div class="grow"><p class="sub">По образцу КП студии Лагуты: веб-страница по личной ссылке + PDF. Цены и сроки вводишь сам — Claude суммы не предлагает.</p></div>
+   <select data-kpst style="width:auto">${Object.entries(KPST).map(([s,t])=>`<option value="${s}" ${s===k.status?'selected':''}>${t}</option>`).join('')}</select>
+   <button class="btn" data-toast="Веб-версия КП опубликована по личной ссылке (GitHub Pages)">Веб-ссылка</button><button class="btn" data-pdf="КП ${esc(p.name)}">PDF</button>
+   <button class="btn pri" data-kpaccept>КП принято → договор и план</button></div>
+  <div class="kp">
+   <section class="card sec"><div class="lab">01 · Шапка</div><div class="row-f">${f('what','Что делаем','')}</div><div class="row-f" style="margin-top:8px"><label class="field" style="margin:0;width:160px">Объём, страниц${f('pages','—')}</label><label class="field" style="margin:0;width:120px">Дата КП${f('date','ДД.ММ')}</label></div></section>
+   <section class="card sec"><div class="lab">02 · Сводка — считается сама</div><div class="kp-sum">
+     <div><div class="v">${days||'—'}</div><div class="l">рабочих дней</div></div><div><div class="v">${k.stages.length}</div><div class="l">этапов</div></div>
+     <div><div class="v">${money(sum)}</div><div class="l">стоимость</div></div><div><div class="v">${left===null?'—':left>0?left+' дн.':'истекло'}</div><div class="l">актуально до ${f('until','ДД.ММ','80px')}</div></div></div></section>
+   <section class="card sec"><div class="lab">03 · Задача и последовательность работ</div><textarea class="in" data-kpf="task" placeholder="Задача клиента своими словами — из брифа или переписки">${esc(k.task)}</textarea></section>
+   <section class="card sec"><div class="lab">04 · Этапы</div><table class="kp"><tr><th>Этап</th><th>Описание</th><th>Результат</th><th style="width:90px">Дней</th><th style="width:130px">Стоимость</th></tr>
+     ${k.stages.map((s,i)=>`<tr><td><input class="in" data-kps="${i}:n" value="${esc(s.n)}"></td><td><input class="in" data-kps="${i}:desc" value="${esc(s.desc)}" placeholder="—"></td><td><input class="in" data-kps="${i}:res" value="${esc(s.res)}" placeholder="—"></td><td><input class="in" data-kps="${i}:days" value="${esc(s.days)}" placeholder="—"></td><td><input class="in" data-kps="${i}:price" value="${esc(s.price)}" placeholder="вводишь сам"></td></tr>`).join('')}
+     <tr><td colspan="3"><button class="btn" data-kpadd style="font-size:12px">+ Этап</button></td><td><b>${days||'—'}</b></td><td><b>${money(sum)}</b></td></tr></table></section>
+   <section class="card sec"><div class="lab">05 · График — даты считаются сами, без учёта согласования</div><div class="row-f" style="margin-bottom:10px"><label class="field" style="margin:0;width:140px">Старт${f('start','ДД.ММ')}</label></div>
+     ${gd?`<div class="list">${k.stages.map(s=>{const d=num(s.days);if(!d)return '';const a=gd[gi],b=gd[gi+d-1];gi+=d;return `<div class="li"><span class="t">${esc(s.n)}</span><span class="m">${F(a)} — ${F(b)}</span></div>`}).join('')}<div class="li"><b class="t">Окончание</b><b class="m" style="color:var(--text)">${F(gd[gd.length-1])}</b></div></div>`:'<div class="empty">Заполни старт и дни этапов</div>'}</section>
+   <section class="card sec"><div class="row-f" style="margin-bottom:10px"><div class="lab" style="flex:1;margin:0">06 · Релевантный опыт</div><button class="btn" data-toast="Claude подберёт 2–3 кейса из галереи проектов и напишет, почему они полезны именно этому клиенту">Подобрать кейсы (Claude)</button></div>
+     <div class="tiles">${k.cases.map((c,i)=>`<div class="card tile" style="cursor:default"><select data-kpc="${i}"><option value="">— кейс —</option>${cases.map(x=>`<option value="${x.id}" ${x.id===c?'selected':''}>${esc(x.name)}</option>`).join('')}</select><span class="k">Почему полезен клиенту — пишет Claude</span></div>`).join('')}</div></section>
+   <section class="card sec"><div class="lab">07 · Формат работы</div><div class="row-f"><span>Оплата по этапам:</span><select data-kpf="pay" style="width:auto">${['50/50','20/40/40'].map(x=>`<option ${x===k.pay?'selected':''}>${x}</option>`).join('')}</select></div>
+     <ul style="margin:10px 0 0;padding-left:20px;color:var(--muted)"><li>Договор и оплата по этапам</li><li>В конце этапа — презентация результата</li><li>Права и исходники — после оплаты и подписания акта</li><li>Дополнительный объём — отдельной сметой</li></ul></section>
+   <section class="card sec"><div class="lab">История КП клиента</div><div class="list">${k.hist.map(h=>`<div class="li"><span class="t">${h[0]} · ${h[1]}</span><span class="m">${h[2]}</span></div>`).join('')}</div></section>
+  </div>`;
+}
+function callsV(){return `<div class="card stub">Созвоны: запись → расшифровка локально (Whisper) → выжимка → правки и решения в паспорт.<br>Экран ещё не перенесён в прототип.</div>`}
+function filesV(p){return `<section class="card"><div class="li" style="padding:12px 16px"><span class="t">${esc(p.links.find(l=>l[0]==='Папка')?.[1]||'')}</span><span class="m">Открыть в проводнике</span></div></section>`}
+function kbV(){
+  let cur;kb.forEach(g=>g.items.forEach(i=>{if(i.id===S.kbid)cur=i}));
+  return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / База знаний</div>
+  <div class="head"><div class="grow"><h1>База знаний</h1><p class="sub">Файлы из kb/ — читаешь здесь, пополняешь через чат с Claude</p></div></div>
+  <div class="kb"><nav class="card tree">${kb.map(g=>`<div class="g">${g.g}</div>${g.items.map(i=>`<div class="it ${i.id===S.kbid?'on':''}" data-kb="${i.id}">${esc(i.t)}</div>`).join('')}`).join('')}</nav>
+  <article class="card page"><div style="display:flex;gap:12px;align-items:flex-start"><h1 style="flex:1">${esc(cur.t)}</h1><button class="btn" data-pdf="${esc(cur.t)}">PDF</button><button class="btn" data-kbedit>${S.kbedit?'Готово':'Править'}</button></div>
+   <div class="meta">${cur.meta.map(m=>`<span>${esc(m)}</span>`).join('')}</div>
+   <div class="body" ${S.kbedit?'contenteditable="true"':''}>${cur.body}</div></article></div>`;
+}
+function refsV(){
+  const f=S.refFilter, list=refs.filter(r=>f==='all'||r.mark===f);
+  const head=`<div class="crumbs"><a data-nav="dash">Дашборд</a> / Референсы и вкус</div>
+  <div class="head"><div class="grow"><h1>Референсы и вкус</h1><p class="sub">Сохранил и забыл. Разбор делает Claude (blocks-db), вкус копится из твоих выборов</p></div><button class="btn pri" data-new="Референс">Добавить</button></div>
+  <div class="filters">${[['all','Все'],['like','Нравится'],['dislike','Не нравится'],['profile','Профиль вкуса']].map(([k,t])=>`<button class="fbtn ${f===k?'on':''}" data-rf="${k}">${t}</button>`).join('')}</div>`;
+  if(f==='profile'){
+    const v={take:0,adapt:0,skip:0};Object.values(boards).forEach(b=>Object.values(b).flat().forEach(n=>(n.items||[]).forEach(it=>{if(it.v in v)v[it.v]++})));
+    return head+`<div class="stats"><div class="card"><div class="v">${refs.filter(r=>r.mark==='like').length}</div><div class="l">референсов «нравится»</div></div><div class="card"><div class="v">${v.take} · ${v.adapt} · ${v.skip}</div><div class="l">с досок решений: берём · адаптируем · мимо</div></div><div class="card"><div class="v">${Object.values(S.taste).filter(x=>x==='yes').length} из ${TASTE.length}</div><div class="l">пунктов почерка подтверждено</div></div></div>
+    <section class="card sec"><h2>Почерк — 10 пунктов</h2><p class="warn" style="margin:0 0 10px">Собрано по 11 сайтам из blocks-db/index/profile.md. Подтверди по пунктам — так Claude узнает, что из этого действительно твоё</p>
+    <div class="list">${TASTE.map((t,i)=>`<div class="li" style="cursor:default"><span class="m" style="width:22px">${i+1}</span><span class="t" style="white-space:normal">${esc(t)}</span><div class="verd"><button class="${S.taste[i]==='yes'?'on':''}" data-taste="${i}:yes">Да, это я</button><button class="${S.taste[i]==='no'?'on':''}" data-taste="${i}:no">Нет</button></div></div>`).join('')}</div></section>`;
+  }
+  return head+`<div class="refs">${list.map(r=>`<div class="card ref"><div class="shot">скриншот</div><div class="b"><div class="t"><div>${esc(r.name)}</div><div>${esc(r.why)}</div></div>
+   <button class="ib ${r.mark==='like'?'on':''}" data-mark="${r.id}:like" title="Нравится">+</button><button class="ib ${r.mark==='dislike'?'on':''}" data-mark="${r.id}:dislike" title="Не нравится">−</button></div></div>`).join('')}</div>`;
+}
+
+/* --- Календарь недели --- */
+const OVER=5;
+function weekDays(off){const m=new Date(2026,9,5+off*7);return [...Array(7)].map((_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d})}
+function calV(){
+  const days=weekDays(S.wk);
+  const stg=d=>{const r=[];Object.keys(plans).forEach(pid=>{const pc=planCalc(pid);if(!pc||P(pid).status==='done')return;const i=pc.days.findIndex(x=>F(x)===F(d));if(i<0)return;const s=pc.st.find(s=>i>=s.fs&&i<s.fs+s.d+s.lag);if(s)r.push({pid,s})});return r};
+  return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / Календарь недели</div>
+  <div class="head"><div class="grow"><h1>Календарь недели</h1><p class="sub">${F(days[0])} — ${F(days[6])} · задачи и этапы всех проектов. От ${OVER} задач в день — предупреждение о перегрузе</p></div>
+   <button class="btn" data-wk="-1">←</button><button class="btn" data-wk="0">Эта неделя</button><button class="btn" data-wk="1">→</button></div>
+  <div class="week">${days.map(d=>{const ts=dayTasks(d),open=ts.filter(x=>!x.done).length,off=!isWork(d);
+    return `<div class="card day ${off?'off':''} ${F(d)===TODAY_S?'now':''}"><div class="dh"><b>${d.getDate()}</b>${WD[d.getDay()]}${off?' · выходной':''}${open>=OVER?'<span class="badge hot">перегруз</span>':''}</div>
+     ${stg(d).map(x=>`<div class="chip stg" data-proj="${x.pid}" data-tab="plan"><span class="p">${esc(P(x.pid).name)}</span>${esc(x.s.name)}${x.s.lag?' · +'+x.s.lag+' дн.':''}</div>`).join('')}
+     ${ts.map(x=>`<div class="chip ${x.done?'dn':''}" data-proj="${x.pid}" data-tab="plan"><span class="p">${esc(P(x.pid).name)}${!x.done&&D(x.date)<TODAY?' · перенесено '+x.moved+' раз':''}</span>${esc(x.text)}</div>`).join('')}
+    </div>`}).join('')}</div>
+  <div class="legend"><span><i style="border:1px dashed var(--line2)"></i>этап по плану</span><span><i style="border:1px solid var(--line)"></i>задача</span></div>`;
+}
+
+/* --- Документы и КП (общий раздел) --- */
+function docsV(){
+  const t=S.doctab;
+  return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / Документы и КП</div>
+  <div class="head"><div class="grow"><h1>Документы и КП</h1><p class="sub">Документы собираются из шаблонов, поля подставляются из проекта. Экспорт в PDF и DOCX. Любую страницу — паспорт, бриф, страницу базы — можно выгрузить в PDF кнопкой в шапке</p></div></div>
+  <div class="tabs">${[['docs','Все документы',docs.length],['tpl','Шаблоны',TPL.length],['kp','КП',Object.keys(kps).length]].map(([k,x,n])=>`<button class="tab ${t===k?'on':''}" data-dtab="${k}">${x}<span class="n">${n}</span></button>`).join('')}</div>
+  ${t==='docs'?`<section class="card"><table><tr><th>Документ</th><th>Проект</th><th>Тип</th><th>Статус</th><th>Версия</th><th>Дата</th></tr>${docs.map(d=>`<tr class="row" data-doc="${d.id}"><td>${esc(d.t)}</td><td class="st">${esc(P(d.pid).name)}</td><td class="st">${TPL.find(x=>x.id===d.tpl).k}</td><td class="st">${d.st}</td><td class="st">v${d.ver}</td><td class="st">${d.date}</td></tr>`).join('')}</table></section>`
+   :t==='tpl'?`<div class="tiles">${TPL.map(x=>`<div class="card tile" data-doc="${x.id}"><span class="k">${x.k} · ${TBLOCKS[x.id].length} блоков</span><span>${esc(x.t)}</span></div>`).join('')}</div>`
+   :`<section class="card"><table><tr><th>КП</th><th>Клиент</th><th>Статус</th><th>Дата</th></tr>${Object.entries(kps).map(([pid,k])=>`<tr class="row" data-proj="${pid}" data-tab="kp"><td>${esc(k.what)}</td><td class="st">${esc(P(pid).client)}</td><td class="st">${KPST[k.status]}</td><td class="st">${k.date}</td></tr>`).join('')}</table></section>`}`;
+}
+function docVals(id){
+  const d=docs.find(x=>x.id===id);if(!d)return null;const p=P(d.pid);
+  return S.docv[id]??={'Номер':'','Город':'','Дата':d.date,'Клиент':p.client,'Что делаем':p.what,'Срок':p.deadline,'Сумма':'','Схема оплаты':'50/50'};
+}
+function docV(){
+  const id=S.docid,d=docs.find(x=>x.id===id),tpl=TPL.find(x=>x.id===(d?d.tpl:id)),vals=d?docVals(id):null;
+  const bl=S.docblocks[id]??=[...TBLOCKS[tpl.id]];
+  const v=k=>vals?(vals[k]?`<span class="var ok">${esc(vals[k])}</span>`:`<span class="var">{${k}}</span>`):`<span class="var">{${k}}</span>`;
+  const page=S.dochtml[id]??bl.map(b=>`<h4>${esc(b)}</h4>${(BT[b]||(()=>'<div class="skel"><i></i><i></i><i style="width:60%"></i></div>'))(v)}`).join('');
+  const more=Object.keys(BT).concat(...Object.values(TBLOCKS)).filter((x,i,a)=>a.indexOf(x)===i&&!bl.includes(x));
+  return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / <a data-nav="docsall">Документы и КП</a> / ${esc(d?d.t:tpl.t)}</div>
+  <div class="head"><div class="grow"><h1>${esc(d?d.t:tpl.t)}</h1><p class="sub">${d?`${esc(P(d.pid).name)} · ${d.st} · v${d.ver} · шаблон «${esc(tpl.t)}»`:'Шаблон — правки попадут во все новые документы этого типа'}</p></div>
+   <button class="btn" data-docedit>${S.docedit?'Готово':'Править текст'}</button><button class="btn" data-pdf="${esc(d?d.t:tpl.t)}">PDF</button><button class="btn" data-toast="Экспорт в DOCX → Downloads">DOCX</button></div>
+  <div class="ed">
+   <div class="card side-p"><div class="lab">Блоки</div>${bl.map((b,i)=>`<div class="blk"><span class="h">⋮⋮</span><span class="t">${esc(b)}</span><button data-bmv="${i}:-1" title="Выше">↑</button><button data-bmv="${i}:1" title="Ниже">↓</button><button data-bdel="${i}" title="Убрать">×</button></div>`).join('')}
+    <select data-badd style="margin-top:8px"><option value="">+ Блок…</option>${more.map(x=>`<option>${esc(x)}</option>`).join('')}</select></div>
+   <div><div class="a4" ${S.docedit?'contenteditable="true"':''}>${page}</div></div>
+   <div class="card side-p"><div class="lab">Поля из проекта</div>${vals?DFIELDS.map(k=>k==='Схема оплаты'?`<label class="field">${k}<select class="in" data-dv="${k}">${['50/50','20/40/40'].map(x=>`<option ${x===vals[k]?'selected':''}>${x}</option>`).join('')}</select></label>`:`<label class="field">${k}<input class="in" data-dv="${k}" value="${esc(vals[k])}" placeholder="${k==='Сумма'?'вводишь сам':'—'}"></label>`).join('')
+     :`<p class="warn" style="margin:0 0 8px">В шаблоне поля — переменные. В документе они подставятся из проекта и карточки клиента.</p>${DFIELDS.map(k=>`<div style="margin-bottom:6px"><span class="var" style="color:#1c1c1b">{${k}}</span></div>`).join('')}`}
+    <div class="lab" style="margin-top:16px">Версии</div><div class="list">${d?[...Array(d.ver)].map((_,i)=>`<div class="li"><span class="t">v${d.ver-i}</span><span class="m">${i?d.date:'текущая'}</span></div>`).join(''):'<div class="empty">История шаблона — в git</div>'}</div>
+    ${d?`<div class="lab" style="margin-top:16px">Связи</div><div class="list"><div class="li" data-proj="${d.pid}"><span class="t">Проект</span><span class="m">${esc(P(d.pid).name)}</span></div><div class="li" data-nav="money"><span class="t">Платежи</span><span class="m">${payments.filter(x=>x.pid===d.pid).length}</span></div></div>`:''}</div>
+  </div>`;
+}
+
+/* --- Клиенты и деньги --- */
+function moneyV(){
+  const t=S.mtab,dg=docs.filter(d=>d.tpl.startsWith('tpl-dog'));
+  return `<div class="crumbs"><a data-nav="dash">Дашборд</a> / Клиенты и деньги</div>
+  <div class="head"><div class="grow"><h1>Клиенты и деньги</h1><p class="sub">Демо-данные. Суммы — из договоров, их вводишь сам. Сейчас эти данные живут в Notion «Документы и финансы»</p></div><button class="btn pri" data-newclient>Новый клиент</button></div>
+  <div class="stats"><div class="card"><div class="v">${payments.filter(x=>x.paid).length}</div><div class="l">платежей получено</div></div><div class="card"><div class="v">${payments.filter(x=>!x.paid).length}</div><div class="l">ждём</div></div><div class="card"><div class="v">${payments.filter(x=>!x.paid&&okDate(x.due)&&D(x.due)<TODAY).length}</div><div class="l">просрочено</div></div></div>
+  <div class="tabs">${[['clients','Клиенты',clients.length],['contracts','Договоры',dg.length],['pay','Платежи',payments.length]].map(([k,x,n])=>`<button class="tab ${t===k?'on':''}" data-mtab="${k}">${x}<span class="n">${n}</span></button>`).join('')}</div>
+  ${t==='clients'?`<section class="card"><table><tr><th>Клиент</th><th>Проект</th><th>Договоров</th><th>КП</th></tr>${clients.map(c=>`<tr class="row" ${c.pid?`data-proj="${c.pid}"`:''}><td>${esc(c.name)}</td><td class="st">${c.pid?esc(P(c.pid).name):'—'}</td><td class="st">${dg.filter(d=>d.pid===c.pid).length||'—'}</td><td class="st">${kps[c.pid]?KPST[kps[c.pid].status]:'—'}</td></tr>`).join('')}</table></section>`
+   :t==='contracts'?`<section class="card"><table><tr><th>Договор</th><th>Клиент</th><th>Статус</th><th>Сумма</th></tr>${dg.map(d=>`<tr class="row" data-doc="${d.id}"><td>${esc(d.t)}</td><td class="st">${esc(P(d.pid).client)}</td><td class="st">${d.st}</td><td class="st">${S.docv[d.id]?.['Сумма']||'из договора'}</td></tr>`).join('')}</table></section>`
+   :`<section class="card"><table><tr><th>Платёж</th><th>Проект</th><th>Срок</th><th>Статус</th><th></th></tr>${payments.map((x,i)=>`<tr><td>${esc(x.t)}</td><td class="st">${esc(P(x.pid).name)}</td><td class="st">${x.due}</td><td class="st">${x.paid?'Получен':'Ждём'}</td><td style="text-align:right">${x.paid?'':`<button class="btn" style="font-size:12px;padding:3px 8px" data-paid="${i}">Пришла оплата</button>`}</td></tr>`).join('')}</table></section>`}`;
+}
+
+/* ---------- События ---------- */
+function bind(){
+  document.querySelectorAll('[data-nav]').forEach(e=>e.onclick=ev=>{ev.stopPropagation();go(e.dataset.nav)});
+  document.querySelectorAll('[data-proj]').forEach(e=>e.onclick=ev=>{if(ev.target.closest('[data-done]'))return;go('project',e.dataset.proj,e.dataset.tab)});
+  document.querySelectorAll('[data-kb]').forEach(e=>e.onclick=()=>{S.kbedit=false;go('kb',e.dataset.kb)});
+  document.querySelectorAll('[data-done]').forEach(e=>e.onclick=ev=>{ev.stopPropagation();const id=e.dataset.done;S.todayDone[id]=!S.todayDone[id];if(id.startsWith('t-')){const t=tasks.find(t=>'t-'+t.id===id);if(t)t.done=S.todayDone[id]}render()});
+  document.querySelectorAll('[data-task]').forEach(e=>e.onclick=ev=>{if(ev.target.closest('[data-done]'))return;const t=todayTasks().find(t=>t.id===e.dataset.task);t&&t.go()});
+  document.querySelectorAll('[data-pf]').forEach(e=>e.onclick=()=>{S.pfilter=e.dataset.pf;render()});
+  document.querySelectorAll('[data-ql]').forEach(e=>e.onclick=ev=>{ev.stopPropagation();toast('Открыть: '+e.dataset.ql+' → '+e.title)});
+  document.querySelectorAll('[data-pmode]').forEach(e=>e.onclick=()=>{S.pmode=e.dataset.pmode;render()});
+  document.querySelectorAll('[data-ptab]').forEach(e=>e.onclick=()=>{S.ptab=e.dataset.ptab;render()});
+  document.querySelectorAll('[data-round]').forEach(e=>e.onclick=()=>{const n=+e.dataset.round;S.openRounds[n]=!(S.openRounds[n]??false);render()});
+  document.querySelectorAll('[data-step]').forEach(e=>e.onchange=()=>{
+    const p=P(S.pid),i=+e.dataset.step;p.steps[i].st=e.value;let n=0;
+    for(let j=i+1;j<p.steps.length;j++)if(['done','work'].includes(p.steps[j].st)){p.steps[j].st='old';n++}
+    render();
+    for(let j=i+1;j<p.steps.length;j++)if(p.steps[j].st==='old')document.getElementById('step-'+j)?.classList.add('flash');
+    toast(n?`Шаг «${p.steps[i].name}» изменён · ${n} шаг(а) ниже помечены ⚠️ Устарело · записано в PROJECT.md`:`Шаг «${p.steps[i].name}» → ${ST[e.value].t} · записано в PROJECT.md`);
+  });
+  document.querySelectorAll('[data-edit]').forEach(e=>e.onchange=()=>{const [rn,i]=e.dataset.edit.split(':').map(Number);P(S.pid).rounds.find(r=>r.n===rn).rows[i][2]=e.value;render();toast('Статус правки сохранён в edits/round-'+rn+'.md')});
+  document.querySelectorAll('[data-send]').forEach(e=>e.onclick=()=>{P(S.pid).rounds.find(r=>r.n===+e.dataset.send).sent=true;render();toast('Раунд отмечен «отправлен клиенту»')});
+  document.querySelectorAll('[data-newround]').forEach(e=>e.onclick=()=>{const p=P(S.pid),n=(p.rounds[0]?.n||0)+1;p.rounds.unshift({n,date:TODAY_S,source:'— укажи источник —',sent:false,rows:[]});S.openRounds[n]=true;render();toast(`Раунд ${n} создан. Скинь правки в чат — Claude разнесёт их по строкам`)});
+  document.querySelectorAll('[data-pstatus]').forEach(e=>e.onchange=()=>{P(S.pid).status=e.value;toast('Статус проекта: '+PSTATUS[e.value])});
+  document.querySelectorAll('[data-kbedit]').forEach(e=>e.onclick=()=>{if(S.kbedit){let cur;kb.forEach(g=>g.items.forEach(i=>{if(i.id===S.kbid)cur=i}));cur.body=document.querySelector('.page .body').innerHTML;toast('Сохранено в файл')}S.kbedit=!S.kbedit;render()});
+  document.querySelectorAll('[data-rf]').forEach(e=>e.onclick=()=>{S.refFilter=e.dataset.rf;render()});
+  document.querySelectorAll('[data-mark]').forEach(e=>e.onclick=()=>{const [id,m]=e.dataset.mark.split(':');const r=refs.find(r=>r.id===+id);r.mark=r.mark===m?'':m;render()});
+  document.querySelectorAll('[data-iproj]').forEach(e=>e.onchange=()=>{inbox.find(i=>i.id===+e.dataset.iproj).proj=e.value});
+  document.querySelectorAll('[data-itype]').forEach(e=>e.onchange=()=>{inbox.find(i=>i.id===+e.dataset.itype).type=e.value});
+  document.querySelectorAll('[data-sort]').forEach(e=>e.onclick=()=>{const k=inbox.findIndex(i=>i.id===+e.dataset.sort),it=inbox[k];inbox.splice(k,1);render();toast(`«${it.type}» → ${it.proj?P(it.proj).name:'без проекта'}`)});
+  document.querySelectorAll('[data-new]').forEach(e=>e.onclick=()=>openNew(e.dataset.new||'Заметка'));
+  document.querySelectorAll('[data-newproj]').forEach(e=>e.onclick=()=>toast('Новый проект: выбрать тип (Figma / Tilda / приложение / пресейл) → пайплайн подставится сам'));
+  const on=(sel,ev,fn)=>document.querySelectorAll(sel).forEach(e=>e[ev]=x=>fn(e,x));
+  on('[data-toast]','onclick',e=>toast(e.dataset.toast));
+  on('[data-pdf]','onclick',(e,x)=>{x.stopPropagation();toast('«'+e.dataset.pdf+'» → PDF сохранён в Downloads')});
+  on('[data-anchor]','onclick',e=>document.getElementById(e.dataset.anchor)?.scrollIntoView({behavior:'smooth',block:'start'}));
+  on('[data-doc]','onclick',e=>go('doc',e.dataset.doc));
+  on('[data-dtab]','onclick',e=>{S.doctab=e.dataset.dtab;render()});
+  on('[data-mtab]','onclick',e=>{S.mtab=e.dataset.mtab;render()});
+  on('[data-wk]','onclick',e=>{const k=+e.dataset.wk;S.wk=k?S.wk+k:0;render()});
+  on('[data-paid]','onclick',e=>{payments[+e.dataset.paid].paid=true;render();toast('Платёж отмечен — статистика обновилась')});
+  on('[data-newclient]','onclick',()=>{$('#ov-client').classList.add('on');$('#cl-name').focus()});
+  on('[data-taste]','onclick',e=>{const [i,v]=e.dataset.taste.split(':');S.taste[i]=S.taste[i]===v?'':v;render()});
+  /* холст */
+  on('[data-cv]','onclick',e=>cvAction(e.dataset.cv));
+  on('[data-cvf]','onclick',e=>{cvState(P(S.pid)).filter=e.dataset.cvf;render()});
+  /* доска решений */
+  on('[data-bst]','onclick',e=>{S.bstage=e.dataset.bst;render()});
+  on('[data-bv]','onclick',e=>{const [id,i,v]=e.dataset.bv.split(':');const it=bnode(id).items[+i];it.v=it.v===v?'':v;render()});
+  on('[data-bnote]','onchange',e=>{const [id,i]=e.dataset.bnote.split(':');bnode(id).items[+i].note=e.value});
+  on('[data-bfix]','onchange',e=>{bnode(e.dataset.bfix).fix=e.value});
+  on('[data-bpick]','onclick',e=>{const [id,k]=e.dataset.bpick.split(':');const n=bnode(id);n.pick=n.pick===k?'':k;render()});
+  on('[data-bok]','onclick',e=>{const [id,v]=e.dataset.bok.split(':'),n=bnode(id),p=P(S.pid);
+    if(n.ok===v){n.ok='';render();return}
+    if(v==='no'&&!n.fix){document.querySelector(`[data-bfix="${id}"]`).focus();toast('Напиши, что поправить — Claude переделает по пометке');return}
+    n.ok=v;if(v==='ok'){p.decisions.unshift([TODAY_S,'Доска: '+n.title+(n.pick?' — вариант '+n.pick:'')+(n.fix?' ('+n.fix+')':'')]);toast('Принято · решение записано в паспорт')}else toast('На переделку · пометка уйдёт Claude');render()});
+  on('[data-bsend]','onclick',()=>{const all=Object.values(boards[S.pid]||{}).flat(),m=all.filter(n=>n.ok).length;toast(`Пометки записаны в projects/${S.pid}/board/${S.bstage}.json (${m} из ${all.length} узлов решено). Claude Code заберёт их и продолжит`)});
+  /* план */
+  on('[data-mkplan]','onclick',()=>{const p=P(S.pid);plans[p.id]={start:TODAY_S,tpl:TYPES[p.type],total:'',stages:p.steps.filter(s=>!['done','skip'].includes(s.st)).map(s=>[s.name,'',0])};S.planEdit=true;render()});
+  on('[data-pedit]','onclick',()=>{S.planEdit=true;render()});
+  on('[data-pdone]','onclick',()=>{S.planEdit=false;render();toast('План сохранён в PROJECT.md')});
+  on('[data-pd]','onchange',e=>{plans[S.pid].stages[+e.dataset.pd][1]=e.value;render()});
+  on('[data-pstart]','onchange',e=>{if(okDate(e.value.trim())){plans[S.pid].start=e.value.trim();render()}else toast('Дата в формате ДД.ММ')});
+  on('[data-ptotal]','onchange',e=>{plans[S.pid].total=e.value;render()});
+  on('[data-shift]','onclick',()=>{const n=Math.max(1,+$('#shiftN').value||1),pc=planCalc(S.pid);if(!pc)return;const i=pc.cur>=0?pc.cur:pc.st.findIndex(s=>s.fs>pc.ti);if(i<0){toast('Все этапы уже позади');return}
+    plans[S.pid].stages[i][2]=(+plans[S.pid].stages[i][2]||0)+n;render();toast(`Этап «${pc.st[i].name}» +${n} дн. из-за ожидания клиента · сдача → ${F(planCalc(S.pid).endFact)}`)});
+  on('[data-tdone]','onclick',e=>{const t=tasks.find(t=>t.id===+e.dataset.tdone);t.done=!t.done;render()});
+  on('[data-tadd]','onclick',()=>{const tx=$('[data-ttext]').value.trim(),dt=$('[data-tdate]').value.trim();if(!tx){$('[data-ttext]').focus();return}if(!okDate(dt)){toast('Дата в формате ДД.ММ');return}
+    tasks.push({id:Date.now(),pid:S.pid,step:$('[data-tstep]').value,text:tx,date:dt,done:false,moved:0});render();toast(dt===TODAY_S?'Задача добавлена — она в «Делах на сегодня»':'Задача добавлена на '+dt)});
+  /* документы */
+  on('[data-mkdoc]','onchange',e=>{if(!e.value)return;const p=P(S.pid),t=TPL.find(x=>x.id===e.value),id='d'+Date.now();docs.push({id,pid:p.id,tpl:t.id,t:t.k+' — '+p.name,st:'Черновик',ver:1,date:TODAY_S});go('doc',id)});
+  on('[data-dv]','onchange',e=>{docVals(S.docid)[e.dataset.dv]=e.value;delete S.dochtml[S.docid];render()});
+  on('[data-bmv]','onclick',e=>{const [i,d]=e.dataset.bmv.split(':').map(Number),b=S.docblocks[S.docid],j=i+d;if(j<0||j>=b.length)return;[b[i],b[j]]=[b[j],b[i]];delete S.dochtml[S.docid];render()});
+  on('[data-bdel]','onclick',e=>{S.docblocks[S.docid].splice(+e.dataset.bdel,1);delete S.dochtml[S.docid];render()});
+  on('[data-badd]','onchange',e=>{if(!e.value)return;S.docblocks[S.docid].push(e.value);delete S.dochtml[S.docid];render()});
+  on('[data-docedit]','onclick',()=>{if(S.docedit){S.dochtml[S.docid]=$('.a4').innerHTML;const d=docs.find(x=>x.id===S.docid);if(d)d.ver++;toast(d?'Текст сохранён · новая версия v'+d.ver:'Шаблон сохранён — изменится во всех новых документах')}S.docedit=!S.docedit;render()});
+  /* КП */
+  on('[data-kpf]','onchange',e=>{kps[S.pid][e.dataset.kpf]=e.value;render()});
+  on('[data-kps]','onchange',e=>{const [i,f]=e.dataset.kps.split(':');kps[S.pid].stages[+i][f]=e.value;render()});
+  on('[data-kpc]','onchange',e=>{kps[S.pid].cases[+e.dataset.kpc]=e.value});
+  on('[data-kpadd]','onclick',()=>{kps[S.pid].stages.push({n:'Новый этап',desc:'',res:'',days:'',price:''});render()});
+  on('[data-kpst]','onchange',e=>{const k=kps[S.pid];k.status=e.value;k.hist.unshift(['v'+(k.hist.length+1),TODAY_S,KPST[e.value]]);render();toast('Статус КП: '+KPST[e.value])});
+  on('[data-mkkp]','onclick',()=>{const p=P(S.pid);kps[p.id]={status:'draft',what:p.what,pages:'',date:TODAY_S,until:'',start:'',task:'',pay:'50/50',stages:[{n:'Этап 1',desc:'',res:'',days:'',price:''}],cases:['','',''],hist:[['v1',TODAY_S,'Черновик']]};render()});
+  on('[data-kpaccept]','onclick',()=>{const p=P(S.pid),k=kps[p.id];
+    if(k.stages.some(s=>!num(s.days))||!okDate(k.start)){toast('Заполни старт и дни всех этапов — из них соберутся договор и план');return}
+    k.status='accepted';k.hist.unshift(['v'+(k.hist.length+1),TODAY_S,'Принято']);
+    plans[p.id]={start:k.start,tpl:'Из КП',total:k.stages.reduce((a,s)=>a+num(s.days),0),stages:k.stages.map(s=>[s.n,num(s.days),0])};
+    const id='d'+Date.now();docs.push({id,pid:p.id,tpl:'tpl-dog-tilda',t:'Договор — '+p.name,st:'Черновик',ver:1,date:TODAY_S});
+    S.docv[id]={'Номер':'','Город':'','Дата':TODAY_S,'Клиент':p.client,'Что делаем':k.what,'Срок':k.stages.reduce((a,s)=>a+num(s.days),0)+' раб. дней','Сумма':money(k.stages.reduce((a,s)=>a+num(s.price),0)),'Схема оплаты':k.pay};
+    render();toast('КП принято → создан договор с теми же этапами и суммами и план проекта по этапам')});
+}
+document.querySelectorAll('.sbtn[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+
+/* ---------- Поиск Ctrl+K ---------- */
+let qi=0, qitems=[];
+function openSearch(){$('#ov-search').classList.add('on');$('#q').value='';qi=0;runQ();$('#q').focus()}
+function runQ(){
+  const q=$('#q').value.trim().toLowerCase();const m=s=>!q||s.toLowerCase().includes(q);
+  const g=[];
+  projects.filter(p=>m(p.name+' '+p.client)).forEach(p=>g.push(['Проекты',p.name,TYPES[p.type],()=>go('project',p.id)]));
+  projects.forEach(p=>p.rounds.forEach(r=>r.rows.forEach(x=>{if(q&&m(x[0]+' '+x[1]))g.push(['Правки',x[1],p.name+' · раунд '+r.n,()=>go('project',p.id,'edits')])})));
+  kb.forEach(gr=>gr.items.forEach(i=>{if(m(i.t)||(q&&m(i.body)))g.push(['База знаний',i.t,gr.g,()=>go('kb',i.id)])}));
+  refs.filter(r=>q&&m(r.name+' '+r.why)).forEach(r=>g.push(['Референсы',r.name,r.why,()=>go('refs')]));
+  tasks.filter(t=>q&&m(t.text)).forEach(t=>g.push(['Задачи',t.text,P(t.pid).name+' · '+t.date,()=>go('project',t.pid,'plan')]));
+  docs.filter(d=>m(d.t)).forEach(d=>g.push(['Документы',d.t,d.st,()=>go('doc',d.id)]));
+  qitems=g.slice(0,30);if(qi>=qitems.length)qi=0;
+  let last='';$('#qres').innerHTML=qitems.map((x,i)=>{const h=x[0]!==last?`<div class="g">${x[0]}</div>`:'';last=x[0];return h+`<div class="r ${i===qi?'sel':''}" data-qi="${i}"><span>${esc(x[1])}</span><span class="m">${esc(x[2])}</span></div>`}).join('')||'<div class="mres"><div class="g">Ничего не нашлось</div></div>';
+  document.querySelectorAll('[data-qi]').forEach(e=>e.onclick=()=>{closeOv();qitems[+e.dataset.qi][3]()});
+}
+$('#q').oninput=()=>{qi=0;runQ()};
+$('#q').onkeydown=e=>{if(e.key==='ArrowDown'){qi=Math.min(qi+1,qitems.length-1);runQ();e.preventDefault()}if(e.key==='ArrowUp'){qi=Math.max(qi-1,0);runQ();e.preventDefault()}if(e.key==='Enter'&&qitems[qi]){closeOv();qitems[qi][3]()}};
+
+/* ---------- Создание Ctrl+N ---------- */
+let newType='Заметка';
+function openNew(t){newType=t||'Заметка';$('#new-type').innerHTML=['Заметка','Правка','Референс','Задача'].map(x=>`<button class="fbtn ${x===newType?'on':''}" data-nt="${x}">${x}</button>`).join('');document.querySelectorAll('[data-nt]').forEach(b=>b.onclick=()=>openNew(b.dataset.nt));$('#ov-new').classList.add('on');$('#new-text').focus()}
+$('#new-save').onclick=()=>{const t=$('#new-text').value.trim();if(!t){$('#new-text').focus();return}inbox.unshift({id:Date.now(),kind:newType==='Референс'?'Ссылка':'Заметка',text:t,meta:'Ctrl+N · только что',proj:S.view==='project'?S.pid:'',type:newType});$('#new-text').value='';closeOv();render();toast('Сохранено во Входящие')};
+function closeOv(){document.querySelectorAll('.ov').forEach(o=>o.classList.remove('on'))}
+document.querySelectorAll('.ov').forEach(o=>o.onclick=e=>{if(e.target===o||e.target.hasAttribute('data-close'))closeOv()});
+$('#cl-parse').onclick=()=>toast('Реквизиты переданы Claude Code — поля заполнятся после разбора');
+$('#cl-save').onclick=()=>{const n=$('#cl-name').value.trim();if(!n){$('#cl-name').focus();return}clients.unshift({name:n,pid:''});closeOv();document.querySelectorAll('#ov-client input,#ov-client textarea').forEach(i=>i.value='');S.mtab='clients';render();toast('Клиент сохранён')};
+$('#b-search').onclick=openSearch;$('#b-new').onclick=()=>openNew();
+document.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if((e.ctrlKey||e.metaKey)&&(k==='k'||k==='л')){e.preventDefault();openSearch()}
+  if((e.ctrlKey||e.metaKey)&&(k==='n'||k==='т')){e.preventDefault();openNew()}
+  if(e.key==='Escape')closeOv();
+  if(e.key==='Delete'&&S.view==='project'&&S.ptab==='canvas'&&!e.target.closest('input,textarea')){const c=cvState(P(S.pid));if(c.sel){c.nodes=c.nodes.filter(n=>n.id!==c.sel);c.edges=c.edges.filter(x=>!x.includes(c.sel));c.sel=null;render();toast('Окно убрано с холста')}}
+});
+
+/* ---------- Тема и симуляция автообновления ---------- */
+$('#b-theme').onclick=()=>{const r=document.documentElement,d=r.dataset.theme==='dark';r.dataset.theme=d?'light':'dark';$('#b-theme').textContent=d?'Тёмная тема':'Светлая тема'};
+$('#b-sim').onclick=()=>{
+  const p=P('nordline'),r=p.rounds[0],i=r.rows.findIndex(x=>x[2]==='wait');
+  if(i<0){toast('Все правки уже закрыты');return}
+  r.rows[i][2]='done';r.rows[i][3]='Claude внёс правку из чата';
+  $('#last-upd').textContent='Claude обновил файлы только что';
+  render();toast(`Claude изменил projects/nordline/edits/round-3.md → «${r.rows[i][0]}» сделано. Экран обновился сам`);
+};
+
+render();
+</script>
+</body>
+</html>
